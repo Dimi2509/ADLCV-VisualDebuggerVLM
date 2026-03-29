@@ -11,13 +11,17 @@ import torch
 from accelerate import Accelerator
 from PIL import Image
 from tqdm import tqdm
-from transformers import (AutoModel, AutoModelForImageTextToText,
-                          AutoProcessor, AutoTokenizer)
+from transformers import (
+    AutoModel,
+    AutoModelForImageTextToText,
+    AutoProcessor,
+    AutoTokenizer,
+)
 
 MODEL_NAMES = [
-    "HuggingFaceTB/SmolVLM-500M-Instruct",
+    # "HuggingFaceTB/SmolVLM-500M-Instruct",
     "Qwen/Qwen2.5-VL-3B-Instruct",
-    "Qwen/Qwen3-VL-2B-Instruct",
+    # "Qwen/Qwen3-VL-2B-Instruct",
 ]
 DEVICE = Accelerator().device
 POPE_DIR = "data/benchmark/pope"
@@ -109,6 +113,7 @@ def run_inference(model, processor, model_input) -> List[str]:
         text = processor.batch_decode(
             output_ids[:, input_len:], skip_special_tokens=True
         )  # Model outputs the prompt, so we only decode the generated part which starts after the len of the input.
+        del output_ids
         return text[0]
     except Exception as e:
         print(f"Error occurred: {str(e)}")
@@ -213,6 +218,8 @@ def evaluate_model(model_name: str, data: List[Dict], image_root: str) -> Dict:
         pred = parse_yes_no(output)
         results.append({"pred": pred, "gt": gt, "latency": latency})
 
+        del model_input
+
     metrics = compute_metrics(results)
     metrics.update(
         {
@@ -223,7 +230,7 @@ def evaluate_model(model_name: str, data: List[Dict], image_root: str) -> Dict:
             "avg_latency_sec": mean(latencies) if latencies else 0.0,
         }
     )
-    
+
     del model
     del processor
     if DEVICE == "cuda":
