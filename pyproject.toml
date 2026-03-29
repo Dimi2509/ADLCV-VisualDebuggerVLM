@@ -5,6 +5,7 @@ description = "DTU ADLCV Visual Debugger for VLMs Project"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "accelerate>=1.13.0",
     "transformers>=5.4.0",
 ]
 

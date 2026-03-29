@@ -1,0 +1,53 @@
+[
+  {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "hallucination_rate": 0.0,
+    "unknown_rate": 0.0,
+    "tp": 1,
+    "fp": 0,
+    "tn": 0,
+    "fn": 0,
+    "model": "HuggingFaceTB/SmolVLM-500M-Instruct",
+    "samples_evaluated": 1,
+    "samples_missing_images": 0,
+    "load_time_sec": 3.4284846782684326,
+    "avg_latency_sec": 0.6399788856506348
+  },
+  {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "hallucination_rate": 0.0,
+    "unknown_rate": 0.0,
+    "tp": 1,
+    "fp": 0,
+    "tn": 0,
+    "fn": 0,
+    "model": "Qwen/Qwen2.5-VL-3B-Instruct",
+    "samples_evaluated": 1,
+    "samples_missing_images": 0,
+    "load_time_sec": 6.017558336257935,
+    "avg_latency_sec": 0.4629836082458496
+  },
+  {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "hallucination_rate": 0.0,
+    "unknown_rate": 0.0,
+    "tp": 1,
+    "fp": 0,
+    "tn": 0,
+    "fn": 0,
+    "model": "Qwen/Qwen3-VL-2B-Instruct",
+    "samples_evaluated": 1,
+    "samples_missing_images": 0,
+    "load_time_sec": 4.962441682815552,
+    "avg_latency_sec": 0.13258028030395508
+  }
+]
