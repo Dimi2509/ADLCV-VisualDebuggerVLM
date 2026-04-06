@@ -19,9 +19,9 @@ from transformers import (
 )
 
 MODEL_NAMES = [
-    # "HuggingFaceTB/SmolVLM-500M-Instruct",
+    "HuggingFaceTB/SmolVLM-500M-Instruct",
     "Qwen/Qwen2.5-VL-3B-Instruct",
-    # "Qwen/Qwen3-VL-2B-Instruct",
+    "Qwen/Qwen3-VL-2B-Instruct",
 ]
 DEVICE = Accelerator().device
 POPE_DIR = "data/benchmark/pope"
