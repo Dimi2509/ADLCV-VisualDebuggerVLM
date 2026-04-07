@@ -19,11 +19,23 @@ from transformers import (
 )
 
 MODEL_NAMES = [
-    "HuggingFaceTB/SmolVLM-500M-Instruct",
-    "Qwen/Qwen2.5-VL-3B-Instruct",
+    # "HuggingFaceTB/SmolVLM-500M-Instruct",
+    # "Qwen/Qwen2.5-VL-3B-Instruct",
     "Qwen/Qwen3-VL-2B-Instruct",
 ]
 DEVICE = Accelerator().device
+DEVICE_TYPE = DEVICE.type
+
+
+def pick_model_dtype(device_type: str) -> torch.dtype:
+    # Use fp16 on CUDA for speed/memory and fp32 elsewhere for compatibility.
+    if device_type == "cuda":
+        return torch.float16
+    return torch.float32
+
+
+MODEL_DTYPE = pick_model_dtype(DEVICE_TYPE)
+
 POPE_DIR = "data/benchmark/pope"
 DEFAULT_SPLIT = "popular"
 DEFAULT_POPE_FILE = os.path.join(POPE_DIR, f"coco_pope_{DEFAULT_SPLIT}.json")
@@ -174,14 +186,14 @@ def evaluate_model(model_name: str, data: List[Dict], image_root: str) -> Dict:
     processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
     model = AutoModelForImageTextToText.from_pretrained(
         model_name,
-        dtype=torch.float16 if DEVICE == "cuda" else torch.float32,
+        dtype=MODEL_DTYPE,
         trust_remote_code=True,
         attn_implementation="eager",
     ).to(DEVICE)
     model.eval()
     load_time = time.time() - load_start
 
-    if DEVICE == "cuda":
+    if DEVICE_TYPE == "cuda":
         torch.cuda.reset_peak_memory_stats()
 
     results: List[Dict] = []
@@ -233,7 +245,7 @@ def evaluate_model(model_name: str, data: List[Dict], image_root: str) -> Dict:
 
     del model
     del processor
-    if DEVICE == "cuda":
+    if DEVICE_TYPE == "cuda":
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
         gc.collect()
@@ -261,6 +273,8 @@ def main() -> None:
     pope_file = os.path.join(POPE_DIR, f"coco_pope_{args.pope_split}.json")
 
     print(f"Device: {DEVICE}")
+    print(f"Device type: {DEVICE_TYPE}")
+    print(f"Model dtype: {MODEL_DTYPE}")
     print(f"POPE file: {pope_file}")
     print(f"Image root: {args.image_root}")
     print(f"Max samples: {args.max_samples}")

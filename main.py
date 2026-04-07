@@ -1,18 +1,24 @@
 import torch
 import transformers
 from accelerate import Accelerator
-from sympy import Dict
+from typing import Any
 from transformers import AutoModelForImageTextToText, AutoProcessor
 
 
 def setup():
-    print(
-        f"PyTorch version: {torch.__version__} and cuda available: {torch.cuda.is_available()}"
-    )
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"CUDA available: {torch.cuda.is_available()}")
     print(f"Transformers version: {transformers.__version__}")
 
 
-def build_message(image_path: str, prompt: str) -> Dict:
+def pick_model_dtype(device_type: str) -> torch.dtype:
+    # Keep fp32 on non-CUDA backends for broader model/operator compatibility.
+    if device_type == "cuda":
+        return torch.float16
+    return torch.float32
+
+
+def build_message(image_path: str, prompt: str) -> list[dict[str, Any]]:
     return [
         {
             "role": "user",
@@ -34,9 +40,13 @@ if __name__ == "__main__":
     setup()
 
     device = Accelerator().device
+    dtype = pick_model_dtype(device.type)
+    print(f"Selected device: {device} (type={device.type})")
+    print(f"Selected dtype: {dtype}")
+
     model = AutoModelForImageTextToText.from_pretrained(
         "HuggingFaceTB/SmolVLM-500M-Instruct",
-        dtype=torch.bfloat16,
+        dtype=dtype,
         attn_implementation="eager",
     ).to(device)
 
