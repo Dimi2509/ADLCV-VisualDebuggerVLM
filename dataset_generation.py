@@ -81,7 +81,7 @@ PROMPT_TEMPLATE = (
     "Instruction: {directive}\n"
     "Use the following QA pairs as additional context about the image:\n"
     "{reference_block}\n"
-    "Important: follow the sentence format exactly. Return only the description."
+    "Important: follow the sentence format exactly. Return only the description. Don't repeat the same claim multiple times."
 )
 
 HAL_TYPE_TO_EXTRACTOR = {
