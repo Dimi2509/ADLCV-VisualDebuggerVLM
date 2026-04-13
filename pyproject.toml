@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.13.0",
     "transformers>=5.4.0",
+    "trl>=1.1.0",
 ]
 
 [project.optional-dependencies]
