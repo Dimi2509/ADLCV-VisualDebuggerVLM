@@ -79,8 +79,6 @@ TYPE_DIRECTIVES = {
 PROMPT_TEMPLATE = (
     "You are describing an image.\n"
     "Instruction: {directive}\n"
-    "Use the following QA pairs as additional context about the image:\n"
-    "{reference_block}\n"
     "Important: follow the sentence format exactly. Return only the description. Don't repeat the same claim multiple times."
 )
 
@@ -512,26 +510,29 @@ def build_reference_block(image_qas: list[dict[str, Any]]) -> str:
     return "\n".join(lines) if lines else "- No usable QA context available."
 
 
-def build_generation_prompt(hal_type: str, image_qas: list[dict[str, Any]]) -> str:
+def build_generation_prompt(hal_type: str) -> str:
     directive = TYPE_DIRECTIVES[hal_type]
-    reference_block = build_reference_block(image_qas)
-    return PROMPT_TEMPLATE.format(directive=directive, reference_block=reference_block)
+    return PROMPT_TEMPLATE.format(directive=directive)
 
 
 def build_judge_prompt(
     hal_type: str,
     claims: list[str],
     gt_contexts: list[dict[str, Any]],
+    image_qas: list[dict[str, Any]],
 ) -> str:
+    qa_reference = build_reference_block(image_qas)
+
     payload = {
         "hallucination_type": hal_type,
         "claims": claims,
         "ground_truth_context_per_claim": gt_contexts,
+        "image_qa_context": qa_reference,
     }
 
     return (
         "You are a strict hallucination judge for a vision-language model.\n"
-        "Use ONLY the provided image and the structured ground-truth context.\n"
+        "Use ONLY the provided image, QA context, and structured ground-truth context.\n"
         "Label each claim as CORRECT or HALLUCINATED.\n"
         "Return valid JSON only with this schema:\n"
         '{"claim_labels": ["CORRECT" | "HALLUCINATED", ...]}\n'
@@ -606,7 +607,9 @@ def parse_args() -> argparse.Namespace:
         help="Directory containing downloaded JPG images",
     )
     parser.add_argument(
-        "--qa-json", default=None, help="Optional QA context JSON override"
+        "--qa-json",
+        default="data/VG/question_answers.json",
+        help="Optional QA context JSON override",
     )
     parser.add_argument(
         "--input-json",
@@ -703,8 +706,12 @@ def run_judging_stage(
         gt_contexts = [
             extract_ground_truth(c, image_id, extractor_key, vg) for c in claims
         ]
+        image_qas = vg.get("question_answers", {}).get(image_id, [])
 
-        judge_prompt = build_judge_prompt(str(row["hal_type"]), claims, gt_contexts)
+        judge_prompt = build_judge_prompt(
+            str(row["hal_type"]), claims, gt_contexts, image_qas
+        )
+
         judge_raw = vlm_generate(
             model=judge_model,
             processor=judge_processor,
@@ -739,7 +746,6 @@ def main() -> None:
 
     if args.mode in {"full", "generate-only"}:
         image_paths = get_image_paths(args.images_dir, args.max_images)
-        qa_map = vg["question_answers"]
         if not image_paths:
             raise ValueError(f"No images found in {args.images_dir}")
 
@@ -760,8 +766,7 @@ def main() -> None:
 
             for hal_type in HALLUCINATION_TYPES:
                 question = TYPE_DIRECTIVES[hal_type]
-                image_qas = qa_map.get(image_id, [])
-                prompt = build_generation_prompt(hal_type, image_qas)
+                prompt = build_generation_prompt(hal_type)
 
                 for _ in range(args.num_generations_per_type):
                     response = vlm_generate(
