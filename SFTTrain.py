@@ -8,14 +8,14 @@ import transformers
 from accelerate import Accelerator
 from datasets import Dataset, DatasetDict, Value, load_dataset
 from transformers import AutoModelForImageTextToText, AutoProcessor
-from trl import SFTTrainer, SFTConfig
-
+from trl import SFTConfig, SFTTrainer
 
 MODEL_PROMPT = (
     "Your are an expert assistant for determining whether claim is correct or incorrect based on a provided image and claim.\n"
-    "Your answer must be either 'Correct' or 'Incorrect' and you must not provide any explanation.\n"
+    "Your answer must be either 'Correct' or 'Hallucinated' and you must not provide any explanation.\n"
     "Claim: {claim}\n"
 )
+
 
 def pick_device() -> torch.device:
     if torch.cuda.is_available():
@@ -26,7 +26,7 @@ def pick_device() -> torch.device:
 
 
 def pick_dtype(device: torch.device) -> torch.dtype:
-    if device.type in {"cuda", "mps"}:
+    if device.type == "cuda":
         return torch.float16
     return torch.float32
 
@@ -160,7 +160,7 @@ def parse_args() -> argparse.Namespace:
         help="Final fine-tuned model output location (default: %(default)s).",
     )
     parser.add_argument(
-        "--per-device-train-batch-size",
+        "--batch-size",
         type=int,
         default=4,
         help="Batch size per device for training (default: %(default)s).",
@@ -178,7 +178,6 @@ def parse_args() -> argparse.Namespace:
         default=[0.70, 0.15, 0.15],
         help="Train/Validation/Test split ratios. Input a space-separated list of three floats (default: %(default)s).",
     )
-
     parser.add_argument(
         "--base-max-new-tokens",
         type=int,
@@ -196,6 +195,18 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.9,
         help="Nucleus sampling top-p (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--lr",
+        type=float,
+        default=2e-5,
+        help="Learning rate for training (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--num-train-epochs",
+        type=int,
+        default=3,
+        help="Number of training epochs (default: %(default)s).",
     )
 
     return parser.parse_args()
@@ -217,4 +228,20 @@ if __name__ == "__main__":
     for split_name, split_data in split_dataset.items():
         print(f"  {split_name}: {split_data.features} \n")
 
-    SFTConfig()
+    model, processor = load_vlm(args.model, pick_device())
+
+    training_args = SFTConfig(
+        output_dir=args.model_output,
+        num_train_epochs=args.num_train_epochs,
+        learning_rate=args.lr,
+        seed=args.train_seed,
+        data_seed=args.train_seed,
+        packing=False, 
+    )
+
+    trainer = SFTTrainer(
+        model=model,
+        train_dataset=split_dataset["train"],
+        eval_dataset=split_dataset["validation"],
+        args=training_args
+    )
