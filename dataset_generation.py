@@ -778,6 +778,7 @@ def main() -> None:
                     claims = split_claims(response)
                     rows.append(
                         {
+                            "image_id": image_id,
                             "img_path": str(image_path).replace("\\\\", "/"),
                             "Question": question,
                             "Response": response,
