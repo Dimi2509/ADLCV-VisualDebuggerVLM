@@ -178,6 +178,10 @@ def vlm_generate(
     return text.strip()
 
 
+def to_posix_path(path: Path | str) -> str:
+    return Path(path).as_posix()
+
+
 # -----------------------------------------------------------
 # Data loading
 # -----------------------------------------------------------
@@ -784,7 +788,7 @@ def main() -> None:
                     rows.append(
                         {
                             "image_id": image_id,
-                            "img_path": str(image_path).replace("\\\\", "/"),
+                            "img_path": to_posix_path(image_path),
                             "Question": question,
                             "Response": response,
                             "hal_type": hal_type,
