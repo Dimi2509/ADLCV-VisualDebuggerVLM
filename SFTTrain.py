@@ -8,7 +8,14 @@ import transformers
 from accelerate import Accelerator
 from datasets import Dataset, DatasetDict, Value, load_dataset
 from transformers import AutoModelForImageTextToText, AutoProcessor
+from trl import SFTTrainer, SFTConfig
 
+
+MODEL_PROMPT = (
+    "Your are an expert assistant for determining whether claim is correct or incorrect based on a provided image and claim.\n"
+    "Your answer must be either 'Correct' or 'Incorrect' and you must not provide any explanation.\n"
+    "Claim: {claim}\n"
+)
 
 def pick_device() -> torch.device:
     if torch.cuda.is_available():
@@ -44,6 +51,24 @@ def unload_vlm(model: Any, processor: Any, device: torch.device) -> None:
     if device.type == "cuda":
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
+
+
+def build_message(image_path: str, prompt: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "image",
+                    "image": f"{image_path}",
+                },
+                {
+                    "type": "text",
+                    "text": f"{prompt}",
+                },
+            ],
+        }
+    ]
 
 
 def split_full_dataset(
@@ -121,7 +146,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--dataset-path",
-        default=None,
+        required=True,
         help="Path to JSON dataset",
     )
     parser.add_argument(
@@ -191,3 +216,5 @@ if __name__ == "__main__":
     print("\nDataset split summary:")
     for split_name, split_data in split_dataset.items():
         print(f"  {split_name}: {split_data.features} \n")
+
+    SFTConfig()
