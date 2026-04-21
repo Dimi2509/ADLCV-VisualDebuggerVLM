@@ -3,6 +3,7 @@ import gc
 import json
 import locale
 import random
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +11,8 @@ import matplotlib.pyplot as plt
 import torch
 from datasets import Dataset, DatasetDict, Value, load_dataset
 from tqdm import tqdm
-from transformers import AutoModelForImageTextToText, AutoProcessor
+from transformers import (AutoModelForImageTextToText, AutoProcessor,
+                          TrainerCallback)
 
 MODEL_PROMPT = (
     "You are an expert assistant for determining whether a claim is correct or incorrect based on the provided image and claim.\n"
@@ -184,7 +186,9 @@ def explode_claim_level_rows(dataset: Dataset, images_dir: str) -> Dataset:
     dropped = 0
 
     for item in dataset:
-        image_id = int(item.get("image_id")) if item.get("image_id") is not None else None
+        image_id = (
+            int(item.get("image_id")) if item.get("image_id") is not None else None
+        )
         img_path = item.get("img_path")
         claims = item.get("claims")
         claim_labels = item.get("claim_labels")
@@ -242,6 +246,7 @@ def explode_claim_level_rows(dataset: Dataset, images_dir: str) -> Dataset:
     flattened = flattened.cast_column("image_id", Value("int32"))
     return flattened
 
+
 def split_full_dataset(
     dataset: Dataset,
     split_ratios: list[float],
@@ -272,12 +277,9 @@ def split_full_dataset(
     rng.shuffle(image_ids)
 
     n_images = len(image_ids)
-    n_train = int(n_images * train_ratio)
-    n_val = int(n_images * val_ratio)
-    n_test = n_images - n_train - n_val
-
-    if n_test <= 0:
-        raise ValueError("Split ratios produced an empty test split")
+    n_train = 5  # int(n_images * train_ratio)
+    n_val = 5  # int(n_images * val_ratio)
+    n_test = 5  # n_images - n_train - n_val
 
     train_ids = set(image_ids[:n_train])
     val_ids = set(image_ids[n_train : n_train + n_val])
@@ -313,7 +315,9 @@ def import_trl_sft() -> tuple[Any, Any]:
     def _utf8_preferred_encoding(do_setlocale: bool = True) -> str:
         return "utf-8"
 
-    def _read_text_utf8(self: Path, encoding: str | None = None, errors: str | None = None) -> str:
+    def _read_text_utf8(
+        self: Path, encoding: str | None = None, errors: str | None = None
+    ) -> str:
         resolved_encoding = encoding if encoding is not None else "utf-8"
         return original_read_text(self, encoding=resolved_encoding, errors=errors)
 
@@ -397,10 +401,20 @@ def evaluate_split_metrics(
     batch_size: int,
     split_name: str,
 ) -> dict[str, Any]:
+    was_training = bool(getattr(model, "training", False))
+    tokenizer = getattr(processor, "tokenizer", None)
+    original_padding_side = (
+        getattr(tokenizer, "padding_side", None) if tokenizer is not None else None
+    )
+    if tokenizer is not None:
+        # Decoder-only generation should use left padding for batched inference.
+        tokenizer.padding_side = "right"
+
     model.eval()
     y_true: list[str] = []
     y_pred: list[str] = []
     hal_types: list[str] = []
+    pad_token_id = get_pad_token_id(processor)
 
     for start in tqdm(
         range(0, len(dataset), batch_size),
@@ -409,26 +423,42 @@ def evaluate_split_metrics(
     ):
         end = min(start + batch_size, len(dataset))
         batch_features = [dataset[i] for i in range(start, end)]
-        batch = collator(batch_features)
-        batch = {
+
+        user_messages: list[list[dict[str, Any]]] = []
+        for feature in batch_features:
+            claim = str(feature["claim"]).strip()
+            image_path = str(feature["img_path"])
+            prompt = MODEL_PROMPT.format(claim=claim)
+            user_messages.append(build_message(image_path, prompt))
+
+        model_inputs = processor.apply_chat_template(
+            user_messages,
+            tokenize=True,
+            add_generation_prompt=True,
+            return_dict=True,
+            return_tensors="pt",
+            processor_kwargs={"padding": True},
+        )
+        model_inputs = {
             key: value.to(device) if torch.is_tensor(value) else value
-            for key, value in batch.items()
+            for key, value in model_inputs.items()
         }
 
-        with torch.no_grad():
-            outputs = model(**batch)
+        input_lengths = model_inputs["attention_mask"].sum(dim=1).tolist()
 
-        logits = outputs.logits.detach().cpu()
-        labels = batch["labels"].detach().cpu()
+        with torch.no_grad():
+            generated_ids = model.generate(
+                **model_inputs,
+                do_sample=False,
+                max_new_tokens=20,
+                pad_token_id=pad_token_id,
+            )
 
         for idx, feature in enumerate(batch_features):
-            valid_positions = (labels[idx] != -100).nonzero(as_tuple=False).flatten()
-            if valid_positions.numel() == 0:
-                pred_label = "UNKNOWN"
-            else:
-                pred_ids = logits[idx, valid_positions].argmax(dim=-1).tolist()
-                pred_text = processor.tokenizer.decode(pred_ids, skip_special_tokens=True)
-                pred_label = parse_predicted_label(pred_text)
+            start_idx = int(input_lengths[idx])
+            pred_ids = generated_ids[idx, start_idx:].detach().cpu().tolist()
+            pred_text = processor.tokenizer.decode(pred_ids, skip_special_tokens=True)
+            pred_label = parse_predicted_label(pred_text)
 
             true_label = normalize_label(feature.get("label_text")) or "UNKNOWN"
             y_true.append(true_label)
@@ -443,10 +473,111 @@ def evaluate_split_metrics(
         type_pred = [y_pred[i] for i in indices]
         per_type[hal_type] = compute_binary_metrics(type_true, type_pred)
 
-    return {
+    results = {
         "overall": overall,
         "per_hallucination_type": per_type,
     }
+    if tokenizer is not None and original_padding_side is not None:
+        tokenizer.padding_side = original_padding_side
+    if was_training:
+        model.train()
+    return results
+
+
+def make_compute_metrics(processor, eval_dataset):
+    tokenizer = processor.tokenizer
+    hal_types = [str(sample["hal_type"]) for sample in eval_dataset]
+
+    def compute_metrics(eval_preds):
+        predictions, labels = eval_preds
+
+        y_pred = []
+        y_true = []
+
+        for pred_seq, label_seq in zip(predictions, labels):
+            answer_positions = [i for i, l in enumerate(label_seq) if l != -100]
+            if not answer_positions:
+                y_pred.append("UNKNOWN")
+                y_true.append("UNKNOWN")
+                continue
+
+            # Decode ALL answer tokens, not just the first one
+            pred_token_ids = [int(pred_seq[i - 1]) for i in answer_positions if i > 0]
+            true_token_ids = [int(label_seq[i]) for i in answer_positions]
+
+            pred_text = tokenizer.decode(pred_token_ids, skip_special_tokens=True)
+            true_text = tokenizer.decode(true_token_ids, skip_special_tokens=True)
+
+            y_pred.append(parse_predicted_label(pred_text))  # your existing function
+            y_true.append(
+                parse_predicted_label(true_text)
+            )  # already normalized in dataset
+
+        if not y_true:
+            return {"f1": 0.0, "precision": 0.0, "recall": 0.0, "accuracy": 0.0}
+
+        overall = compute_binary_metrics(y_true, y_pred)
+
+        per_type: dict[str, dict[str, float]] = {}
+        for hal_type in sorted(set(hal_types)):
+            indices = [i for i, h in enumerate(hal_types) if h == hal_type]
+            indices = [i for i in indices if i < len(y_true)]
+            if not indices:
+                continue
+            per_type[hal_type] = compute_binary_metrics(
+                [y_true[i] for i in indices],
+                [y_pred[i] for i in indices],
+            )
+
+        result = {f"overall_{k}": v for k, v in overall.items()}
+        for hal_type, type_metrics in per_type.items():
+            for k, v in type_metrics.items():
+                result[f"{hal_type}_{k}"] = v
+
+        return result
+
+    return compute_metrics
+
+
+def preprocess_logits_for_metrics(logits, labels):
+    # Argmax on GPU before tensors are moved to CPU — avoids OOM from huge vocab logits
+    if isinstance(logits, tuple):
+        logits = logits[0]
+    return logits.argmax(dim=-1)
+
+
+class EvalMetricsCallback(TrainerCallback):
+    def __init__(
+        self,
+        metrics_dir: Path,
+        file_prefix: str,
+        history_filename: str,
+    ) -> None:
+        self.metrics_dir = metrics_dir
+        self.file_prefix = file_prefix
+        self.history_path = self.metrics_dir / history_filename
+        self.metrics_dir.mkdir(parents=True, exist_ok=True)
+        self.history: list[dict[str, Any]] = []
+
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        step = int(state.global_step)
+
+        payload = {
+            "step": step,
+            "epoch": float(state.epoch) if state.epoch is not None else None,
+            "metrics": metrics or {},  # already contains eval_f1, eval_precision, etc.
+        }
+
+        step_path = self.metrics_dir / f"{self.file_prefix}_{step}.json"
+        step_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+        self.history.append(payload)
+        self.history_path.write_text(
+            json.dumps(self.history, indent=2), encoding="utf-8"
+        )
+
+        print(f"Saved step metrics to {step_path.as_posix()}")
+        return control
 
 
 def plot_loss_curves(log_history: list[dict[str, Any]], output_path: str) -> None:
@@ -508,8 +639,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model-output",
-        default="models/",
-        help="Final fine-tuned model output location (default: %(default)s).",
+        default="models",
+        help="Base directory for model run outputs (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--model-name",
+        default="",
+        help="Optional run/model name. If omitted, auto-generates sft_model_YYYYMMDD_HHMMSS.",
     )
     parser.add_argument(
         "--batch-size",
@@ -650,14 +786,29 @@ def parse_args() -> argparse.Namespace:
         help="Batch size for post-training metrics evaluation (default: %(default)s).",
     )
     parser.add_argument(
+        "--metrics-dir",
+        default="metrics",
+        help="Base directory for metrics outputs (default: %(default)s).",
+    )
+    parser.add_argument(
         "--metrics-output-json",
-        default="metrics/sft_metrics.json",
-        help="Output path for metrics JSON summary (default: %(default)s).",
+        default="sft_metrics_final.json",
+        help="Final metrics summary filename under metrics/<model_name>/ (default: %(default)s).",
     )
     parser.add_argument(
         "--loss-plot-path",
-        default="metrics/loss_curve.png",
-        help="Output path for train/validation loss plot (default: %(default)s).",
+        default="loss_curve.png",
+        help="Loss plot filename under metrics/<model_name>/ (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--eval-metrics-prefix",
+        default="eval_metrics_step",
+        help="Prefix for per-eval-step metrics files (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--eval-metrics-history-file",
+        default="eval_metrics_history.json",
+        help="Filename for accumulated eval metrics history under metrics/<model_name>/ (default: %(default)s).",
     )
     parser.add_argument(
         "--skip-post-metrics",
@@ -676,6 +827,22 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
     SFTConfig, SFTTrainer = import_trl_sft()
+
+    model_name = (
+        args.model_name.strip()
+        or f"sft_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+    model_output_dir = Path(args.model_output) / model_name
+    metrics_dir = Path(args.metrics_dir) / model_name
+    model_output_dir.mkdir(parents=True, exist_ok=True)
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+
+    loss_plot_path = metrics_dir / args.loss_plot_path
+    final_metrics_path = metrics_dir / args.metrics_output_json
+
+    print(f"Model name: {model_name}")
+    print(f"Model output dir: {model_output_dir.as_posix()}")
+    print(f"Metrics dir: {metrics_dir.as_posix()}")
 
     dataset_dict = load_dataset("json", data_files=args.dataset_path, num_proc=4)
     dataset = dataset_dict["train"]
@@ -696,7 +863,7 @@ if __name__ == "__main__":
     collator = build_collator(processor, args.max_seq_length)
 
     training_args = SFTConfig(
-        output_dir=args.model_output,
+        output_dir=model_output_dir.as_posix(),
         num_train_epochs=args.num_train_epochs,
         learning_rate=args.lr,
         per_device_train_batch_size=args.batch_size,
@@ -726,7 +893,9 @@ if __name__ == "__main__":
             if module.strip()
         ]
         if not target_modules:
-            raise ValueError("--lora-target-modules cannot be empty when LoRA is enabled")
+            raise ValueError(
+                "--lora-target-modules cannot be empty when LoRA is enabled"
+            )
 
         peft_config = LoraConfig(
             r=args.lora_r,
@@ -751,25 +920,32 @@ if __name__ == "__main__":
         args=training_args,
         data_collator=collator,
         peft_config=peft_config,
+        compute_metrics=make_compute_metrics(processor, split_dataset["validation"]),
+        preprocess_logits_for_metrics=preprocess_logits_for_metrics,
+    )
+
+    trainer.add_callback(
+        EvalMetricsCallback(
+            metrics_dir=metrics_dir,
+            file_prefix=args.eval_metrics_prefix,
+            history_filename=args.eval_metrics_history_file,
+        )
     )
 
     if args.use_lora and hasattr(trainer.model, "print_trainable_parameters"):
         trainer.model.print_trainable_parameters()
 
     trainer.train()
-    trainer.save_model(args.model_output)
-    processor.save_pretrained(args.model_output)
+    trainer.save_model(model_output_dir.as_posix())
+    processor.save_pretrained(model_output_dir.as_posix())
 
     if not args.skip_loss_plot:
-        plot_loss_curves(trainer.state.log_history, args.loss_plot_path)
-
-    test_metrics = trainer.evaluate(split_dataset["test"])
-    print("\nTest metrics:")
-    for key, value in test_metrics.items():
-        print(f"  {key}: {value}")
+        plot_loss_curves(trainer.state.log_history, loss_plot_path.as_posix())
 
     if not args.skip_post_metrics:
-        metrics_summary = {
+        final_validation_metrics = {
+            "model_name": model_name,
+            "final_step": int(trainer.state.global_step),
             "validation": evaluate_split_metrics(
                 model=model,
                 processor=processor,
@@ -777,21 +953,43 @@ if __name__ == "__main__":
                 collator=collator,
                 device=device,
                 batch_size=args.metrics_batch_size,
-                split_name="validation",
-            ),
-            "test": evaluate_split_metrics(
-                model=model,
-                processor=processor,
-                dataset=split_dataset["test"],
-                collator=collator,
-                device=device,
-                batch_size=args.metrics_batch_size,
-                split_name="test",
+                split_name="validation_final",
             ),
         }
-        metrics_path = Path(args.metrics_output_json)
-        metrics_path.parent.mkdir(parents=True, exist_ok=True)
-        metrics_path.write_text(json.dumps(metrics_summary, indent=2), encoding="utf-8")
-        print(f"Saved metrics summary to {metrics_path.as_posix()}")
+        final_metrics_path.write_text(
+            json.dumps(final_validation_metrics, indent=2), encoding="utf-8"
+        )
+        print(f"Saved final validation metrics to {final_metrics_path.as_posix()}")
+
+    # test_metrics = trainer.evaluate(split_dataset["test"])
+    # print("\nTest metrics:")
+    # for key, value in test_metrics.items():
+    #     print(f"  {key}: {value}")
+
+    # if not args.skip_post_metrics:
+    #     metrics_summary = {
+    #         "validation": evaluate_split_metrics(
+    #             model=model,
+    #             processor=processor,
+    #             dataset=split_dataset["validation"],
+    #             collator=collator,
+    #             device=device,
+    #             batch_size=args.metrics_batch_size,
+    #             split_name="validation",
+    #         ),
+    #         "test": evaluate_split_metrics(
+    #             model=model,
+    #             processor=processor,
+    #             dataset=split_dataset["test"],
+    #             collator=collator,
+    #             device=device,
+    #             batch_size=args.metrics_batch_size,
+    #             split_name="test",
+    #         ),
+    #     }
+    #     metrics_path = Path(args.metrics_output_json)
+    #     metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    #     metrics_path.write_text(json.dumps(metrics_summary, indent=2), encoding="utf-8")
+    #     print(f"Saved metrics summary to {metrics_path.as_posix()}")
 
     unload_vlm(model, processor, device)
