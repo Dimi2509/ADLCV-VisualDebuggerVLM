@@ -1,7 +1,7 @@
 import argparse
 import json
 from typing import Any
-
+import PIL.Image
 import torch
 from datasets import load_dataset
 from tqdm import tqdm
@@ -59,7 +59,7 @@ def build_chat_input(example: dict[str, Any]) -> list[dict[str, Any]]:
         {
             "role": "user",
             "content": [
-                {"type": "image", "image": str(example["img_path"])},
+                {"type": "image", "image": PIL.Image.open(str(example["img_path"])).convert("RGB")},
                 {"type": "text", "text": prompt},
             ],
         }

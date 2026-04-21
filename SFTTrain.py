@@ -9,6 +9,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import torch
+import PIL.Image
 from datasets import Dataset, DatasetDict, Value, load_dataset
 from tqdm import tqdm
 from transformers import (AutoModelForImageTextToText, AutoProcessor,
@@ -75,7 +76,7 @@ def build_message(image_path: str, prompt: str) -> list[dict[str, Any]]:
             "content": [
                 {
                     "type": "image",
-                    "image": f"{image_path}",
+                    "image": PIL.Image.open(image_path).convert("RGB"),
                 },
                 {
                     "type": "text",
