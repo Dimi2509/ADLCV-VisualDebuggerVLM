@@ -277,9 +277,9 @@ def split_full_dataset(
     rng.shuffle(image_ids)
 
     n_images = len(image_ids)
-    n_train = 5  # int(n_images * train_ratio)
-    n_val = 5  # int(n_images * val_ratio)
-    n_test = 5  # n_images - n_train - n_val
+    n_train = int(n_images * train_ratio)
+    n_val = int(n_images * val_ratio)
+    n_test = n_images - n_train - n_val
 
     train_ids = set(image_ids[:n_train])
     val_ids = set(image_ids[n_train : n_train + n_val])
