@@ -1,6 +1,6 @@
 [
   {
-    "img_path": "images/12.jpg",
+    "img_path": "data/images/12.jpg",
     "Question": "Is the cat touching the book?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -13,7 +13,7 @@
     "image_id": 12
   },
   {
-    "img_path": "images/13.jpg",
+    "img_path": "data/images/13.jpg",
     "Question": "Is the dog to the right of the toilet?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -26,7 +26,7 @@
     "image_id": 13
   },
   {
-    "img_path": "images/14.jpg",
+    "img_path": "data/images/14.jpg",
     "Question": "Is the sheep under the chair?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -39,7 +39,7 @@
     "image_id": 14
   },
   {
-    "img_path": "images/15.jpg",
+    "img_path": "data/images/15.jpg",
     "Question": "Is the banana behind the cake?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -52,7 +52,7 @@
     "image_id": 15
   },
   {
-    "img_path": "images/16.jpg",
+    "img_path": "data/images/16.jpg",
     "Question": "Is the dog far from the donut?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -65,7 +65,7 @@
     "image_id": 16
   },
   {
-    "img_path": "images/17.jpg",
+    "img_path": "data/images/17.jpg",
     "Question": "Is the cow far from the houses?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -78,7 +78,7 @@
     "image_id": 17
   },
   {
-    "img_path": "images/30.jpg",
+    "img_path": "data/images/30.jpg",
     "Question": "Is the horse to the left of the carriage moving in the opposite direction?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -91,7 +91,7 @@
     "image_id": 30
   },
   {
-    "img_path": "images/44.png",
+    "img_path": "data/images/44.png",
     "Question": "Is the knife blade pointing upward?",
     "Response": "yes",
     "hal_type": "spatial_error",
@@ -104,20 +104,7 @@
     "image_id": 44
   },
   {
-    "img_path": "images/20.jpg",
-    "Question": "Are there eggs in the nest?",
-    "Response": "yes",
-    "hal_type": "object_existence",
-    "claims": [
-      "There are eggs in the nest."
-    ],
-    "claim_labels": [
-      "HALLUCINATED"
-    ],
-    "image_id": 20
-  },
-  {
-    "img_path": "images/27.jpg",
+    "img_path": "data/images/27.jpg",
     "Question": "Is the man hitting a golf ball with the club?",
     "Response": "no",
     "hal_type": "object_existence",
@@ -130,7 +117,7 @@
     "image_id": 27
   },
   {
-    "img_path": "images/31.jpg",
+    "img_path": "data/images/31.jpg",
     "Question": "Is there a mobile phone in the image?",
     "Response": "No",
     "hal_type": "object_existence",
@@ -143,7 +130,7 @@
     "image_id": 31
   },
   {
-    "img_path": "images/32.jpg",
+    "img_path": "data/images/32.jpg",
     "Question": "Is there a plate of rice in the image?",
     "Response": "No.",
     "hal_type": "object_existence",
@@ -156,7 +143,7 @@
     "image_id": 32
   },
   {
-    "img_path": "images/33.jpg",
+    "img_path": "data/images/33.jpg",
     "Question": "Is there a motorcycle in the image?",
     "Response": "yes",
     "hal_type": "object_existence",
@@ -169,7 +156,7 @@
     "image_id": 33
   },
   {
-    "img_path": "images/34.jpg",
+    "img_path": "data/images/34.jpg",
     "Question": "Is there a frisbee in the air?",
     "Response": "Yes",
     "hal_type": "object_existence",
@@ -182,7 +169,7 @@
     "image_id": 34
   },
   {
-    "img_path": "images/35.jpg",
+    "img_path": "data/images/35.jpg",
     "Question": "Is the child sitting on a sofa?",
     "Response": "no",
     "hal_type": "object_existence",
@@ -195,7 +182,7 @@
     "image_id": 35
   },
   {
-    "img_path": "images/36.jpg",
+    "img_path": "data/images/36.jpg",
     "Question": "Is there a racket in the left player's hands?",
     "Response": "no",
     "hal_type": "object_existence",
@@ -208,7 +195,7 @@
     "image_id": 36
   },
   {
-    "img_path": "images/37.jpg",
+    "img_path": "data/images/37.jpg",
     "Question": "Is the girl brushing her teeth?",
     "Response": "yes",
     "hal_type": "action_event_error",
@@ -221,7 +208,7 @@
     "image_id": 37
   },
   {
-    "img_path": "images/38.jpg",
+    "img_path": "data/images/38.jpg",
     "Question": "Is the woman on the left talking on the phone?",
     "Response": "No",
     "hal_type": "action_event_error",
@@ -234,7 +221,7 @@
     "image_id": 38
   },
   {
-    "img_path": "images/39.jpg",
+    "img_path": "data/images/39.jpg",
     "Question": "Is the man feeding the sheep?",
     "Response": "yes",
     "hal_type": "action_event_error",
@@ -247,7 +234,7 @@
     "image_id": 39
   },
   {
-    "img_path": "images/40.jpg",
+    "img_path": "data/images/40.jpg",
     "Question": "Is the girl on the left feeding the cow?",
     "Response": "yes",
     "hal_type": "action_event_error",
@@ -260,7 +247,7 @@
     "image_id": 40
   },
   {
-    "img_path": "images/41.jpg",
+    "img_path": "data/images/41.jpg",
     "Question": "Does the image depict a birthday?",
     "Response": "Yes",
     "hal_type": "action_event_error",
@@ -273,7 +260,7 @@
     "image_id": 41
   },
   {
-    "img_path": "images/42.jpg",
+    "img_path": "data/images/42.jpg",
     "Question": "Does the image depict a birthday?",
     "Response": "no",
     "hal_type": "action_event_error",
@@ -286,7 +273,7 @@
     "image_id": 42
   },
   {
-    "img_path": "images/45.jpg",
+    "img_path": "data/images/45.jpg",
     "Question": "Is the father riding a bicycle?",
     "Response": "yes",
     "hal_type": "action_event_error",
@@ -299,7 +286,7 @@
     "image_id": 45
   },
   {
-    "img_path": "images/46.jpg",
+    "img_path": "data/images/46.jpg",
     "Question": "Is the girl playing baseball?",
     "Response": "yes",
     "hal_type": "action_event_error",
@@ -312,7 +299,7 @@
     "image_id": 46
   },
   {
-    "img_path": "images/2.png",
+    "img_path": "data/images/2.png",
     "Question": "What are the first 4 decimal digits of pi in the image?",
     "Response": "3.1615",
     "hal_type": "ocr_text_error",
@@ -325,7 +312,7 @@
     "image_id": 2
   },
   {
-    "img_path": "images/3.png",
+    "img_path": "data/images/3.png",
     "Question": "Which state borders Texas to the west?",
     "Response": "New Mexico",
     "hal_type": "ocr_text_error",
@@ -338,7 +325,7 @@
     "image_id": 3
   },
   {
-    "img_path": "images/5.png",
+    "img_path": "data/images/5.png",
     "Question": "To what exponent is c raised in Einstein's energy equation?",
     "Response": "3",
     "hal_type": "ocr_text_error",
@@ -351,7 +338,7 @@
     "image_id": 5
   },
   {
-    "img_path": "images/6.png",
+    "img_path": "data/images/6.png",
     "Question": "Which ocean is between Europe and North America?",
     "Response": "Pacific",
     "hal_type": "ocr_text_error",
@@ -364,7 +351,7 @@
     "image_id": 6
   },
   {
-    "img_path": "images/7.png",
+    "img_path": "data/images/7.png",
     "Question": "What is Spain's GDP in 2021 in trillions of euros?",
     "Response": "1.8",
     "hal_type": "ocr_text_error",
@@ -377,7 +364,7 @@
     "image_id": 7
   },
   {
-    "img_path": "images/8.png",
+    "img_path": "data/images/8.png",
     "Question": "To what exponent is the distance between bodies raised in the formula of universal gravitation?",
     "Response": "3",
     "hal_type": "ocr_text_error",
@@ -390,7 +377,7 @@
     "image_id": 8
   },
   {
-    "img_path": "images/9.png",
+    "img_path": "data/images/9.png",
     "Question": "What place appears on the welcome sign?",
     "Response": "College Park",
     "hal_type": "ocr_text_error",
@@ -403,7 +390,7 @@
     "image_id": 9
   },
   {
-    "img_path": "images/10.png",
+    "img_path": "data/images/10.png",
     "Question": "What text appears in the logo?",
     "Response": "Red Deer",
     "hal_type": "ocr_text_error",
@@ -416,7 +403,7 @@
     "image_id": 10
   },
   {
-    "img_path": "images/18.png",
+    "img_path": "data/images/18.png",
     "Question": "How many legs does the duck have?",
     "Response": "2",
     "hal_type": "counting_error",
@@ -429,7 +416,7 @@
     "image_id": 18
   },
   {
-    "img_path": "images/19.png",
+    "img_path": "data/images/19.png",
     "Question": "How many stars does the flag of the European Union have?",
     "Response": "12",
     "hal_type": "counting_error",
@@ -442,7 +429,7 @@
     "image_id": 19
   },
   {
-    "img_path": "images/47.jpg",
+    "img_path": "data/images/47.jpg",
     "Question": "How many rows does the chessboard have?",
     "Response": "8",
     "hal_type": "counting_error",
@@ -455,7 +442,7 @@
     "image_id": 47
   },
   {
-    "img_path": "images/48.jpg",
+    "img_path": "data/images/48.jpg",
     "Question": "How many pieces are missing from the chessboard?",
     "Response": "0",
     "hal_type": "counting_error",
@@ -468,7 +455,7 @@
     "image_id": 48
   },
   {
-    "img_path": "images/51.jpg",
+    "img_path": "data/images/51.jpg",
     "Question": "How many visible black stripes are there in the logo on the left shoe?",
     "Response": "3",
     "hal_type": "counting_error",
@@ -481,7 +468,7 @@
     "image_id": 51
   },
   {
-    "img_path": "images/52.jpg",
+    "img_path": "data/images/52.jpg",
     "Question": "How many legs does the dog have?",
     "Response": "4",
     "hal_type": "counting_error",
@@ -494,7 +481,7 @@
     "image_id": 52
   },
   {
-    "img_path": "images/53.jpg",
+    "img_path": "data/images/53.jpg",
     "Question": "How many wolves are in this pack?",
     "Response": "6",
     "hal_type": "counting_error",
@@ -507,7 +494,7 @@
     "image_id": 53
   },
   {
-    "img_path": "images/54.jpg",
+    "img_path": "data/images/54.jpg",
     "Question": "How many different animal species can be seen?",
     "Response": "4",
     "hal_type": "counting_error",
@@ -520,7 +507,7 @@
     "image_id": 54
   },
   {
-    "img_path": "images/1.png",
+    "img_path": "data/images/1.png",
     "Question": "Are the two orange circles the same size?",
     "Response": "Yes",
     "hal_type": "attribute_error",
@@ -533,7 +520,7 @@
     "image_id": 1
   },
   {
-    "img_path": "images/11.png",
+    "img_path": "data/images/11.png",
     "Question": "Are the two horizontal lines the same length?",
     "Response": "Yes",
     "hal_type": "attribute_error",
@@ -546,7 +533,7 @@
     "image_id": 11
   },
   {
-    "img_path": "images/25.jpg",
+    "img_path": "data/images/25.jpg",
     "Question": "What color is the London telephone box?",
     "Response": "yellow",
     "hal_type": "attribute_error",
@@ -559,7 +546,7 @@
     "image_id": 25
   },
   {
-    "img_path": "images/26.jpg",
+    "img_path": "data/images/26.jpg",
     "Question": "Is the front face of the Rubik's Cube purple?",
     "Response": "Yes",
     "hal_type": "attribute_error",
@@ -572,7 +559,7 @@
     "image_id": 26
   },
   {
-    "img_path": "images/29.jpg",
+    "img_path": "data/images/29.jpg",
     "Question": "What color is the STOP sign?",
     "Response": "green",
     "hal_type": "attribute_error",
@@ -585,7 +572,7 @@
     "image_id": 29
   },
   {
-    "img_path": "images/43.jpg",
+    "img_path": "data/images/43.jpg",
     "Question": "What color is the apple?",
     "Response": "blue",
     "hal_type": "attribute_error",
@@ -598,7 +585,7 @@
     "image_id": 43
   },
   {
-    "img_path": "images/49.jpg",
+    "img_path": "data/images/49.jpg",
     "Question": "Is the armchair made of wool?",
     "Response": "no",
     "hal_type": "attribute_error",
@@ -611,7 +598,7 @@
     "image_id": 49
   },
   {
-    "img_path": "images/50.jpg",
+    "img_path": "data/images/50.jpg",
     "Question": "Is the hammer made of glass?",
     "Response": "yes",
     "hal_type": "attribute_error",
