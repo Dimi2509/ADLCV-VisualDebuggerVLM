@@ -1,0 +1,626 @@
+[
+  {
+    "img_path": "images/12.jpg",
+    "Question": "Is the cat touching the book?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The cat is touching the book."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 12
+  },
+  {
+    "img_path": "images/13.jpg",
+    "Question": "Is the dog to the right of the toilet?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The dog is to the right of the toilet."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 13
+  },
+  {
+    "img_path": "images/14.jpg",
+    "Question": "Is the sheep under the chair?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The sheep is under the chair."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 14
+  },
+  {
+    "img_path": "images/15.jpg",
+    "Question": "Is the banana behind the cake?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The banana is behind the cake."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 15
+  },
+  {
+    "img_path": "images/16.jpg",
+    "Question": "Is the dog far from the donut?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The dog is far from the donut."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 16
+  },
+  {
+    "img_path": "images/17.jpg",
+    "Question": "Is the cow far from the houses?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The cow is far from the houses."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 17
+  },
+  {
+    "img_path": "images/30.jpg",
+    "Question": "Is the horse to the left of the carriage moving in the opposite direction?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The horse to the left of the carriage is moving in the opposite direction."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 30
+  },
+  {
+    "img_path": "images/44.png",
+    "Question": "Is the knife blade pointing upward?",
+    "Response": "yes",
+    "hal_type": "spatial_error",
+    "claims": [
+      "The knife blade is pointing upward."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 44
+  },
+  {
+    "img_path": "images/20.jpg",
+    "Question": "Are there eggs in the nest?",
+    "Response": "yes",
+    "hal_type": "object_existence",
+    "claims": [
+      "There are eggs in the nest."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 20
+  },
+  {
+    "img_path": "images/27.jpg",
+    "Question": "Is the man hitting a golf ball with the club?",
+    "Response": "no",
+    "hal_type": "object_existence",
+    "claims": [
+      "The man is not hitting a golf ball with the club."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 27
+  },
+  {
+    "img_path": "images/31.jpg",
+    "Question": "Is there a mobile phone in the image?",
+    "Response": "No",
+    "hal_type": "object_existence",
+    "claims": [
+      "There is no mobile phone in the image."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 31
+  },
+  {
+    "img_path": "images/32.jpg",
+    "Question": "Is there a plate of rice in the image?",
+    "Response": "No.",
+    "hal_type": "object_existence",
+    "claims": [
+      "There is no plate of rice in the image."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 32
+  },
+  {
+    "img_path": "images/33.jpg",
+    "Question": "Is there a motorcycle in the image?",
+    "Response": "yes",
+    "hal_type": "object_existence",
+    "claims": [
+      "There is a motorcycle in the image."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 33
+  },
+  {
+    "img_path": "images/34.jpg",
+    "Question": "Is there a frisbee in the air?",
+    "Response": "Yes",
+    "hal_type": "object_existence",
+    "claims": [
+      "There is a frisbee in the air."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 34
+  },
+  {
+    "img_path": "images/35.jpg",
+    "Question": "Is the child sitting on a sofa?",
+    "Response": "no",
+    "hal_type": "object_existence",
+    "claims": [
+      "The child is not sitting on a sofa."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 35
+  },
+  {
+    "img_path": "images/36.jpg",
+    "Question": "Is there a racket in the left player's hands?",
+    "Response": "no",
+    "hal_type": "object_existence",
+    "claims": [
+      "There is no racket in the left player's hands."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 36
+  },
+  {
+    "img_path": "images/37.jpg",
+    "Question": "Is the girl brushing her teeth?",
+    "Response": "yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The girl is brushing her teeth."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 37
+  },
+  {
+    "img_path": "images/38.jpg",
+    "Question": "Is the woman on the left talking on the phone?",
+    "Response": "No",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The woman on the left is not talking on the phone."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 38
+  },
+  {
+    "img_path": "images/39.jpg",
+    "Question": "Is the man feeding the sheep?",
+    "Response": "yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The man is feeding the sheep."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 39
+  },
+  {
+    "img_path": "images/40.jpg",
+    "Question": "Is the girl on the left feeding the cow?",
+    "Response": "yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The girl on the left is feeding the cow."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 40
+  },
+  {
+    "img_path": "images/41.jpg",
+    "Question": "Does the image depict a birthday?",
+    "Response": "Yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The image depicts a birthday."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 41
+  },
+  {
+    "img_path": "images/42.jpg",
+    "Question": "Does the image depict a birthday?",
+    "Response": "no",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The image does not depict a birthday."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 42
+  },
+  {
+    "img_path": "images/45.jpg",
+    "Question": "Is the father riding a bicycle?",
+    "Response": "yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The father is riding a bicycle."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 45
+  },
+  {
+    "img_path": "images/46.jpg",
+    "Question": "Is the girl playing baseball?",
+    "Response": "yes",
+    "hal_type": "action_event_error",
+    "claims": [
+      "The girl is playing baseball."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 46
+  },
+  {
+    "img_path": "images/2.png",
+    "Question": "What are the first 4 decimal digits of pi in the image?",
+    "Response": "3.1615",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "The first 4 decimal digits of pi in the image are 3.1615."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 2
+  },
+  {
+    "img_path": "images/3.png",
+    "Question": "Which state borders Texas to the west?",
+    "Response": "New Mexico",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "According to the image, the state west of Texas is New Mexico."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 3
+  },
+  {
+    "img_path": "images/5.png",
+    "Question": "To what exponent is c raised in Einstein's energy equation?",
+    "Response": "3",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "In the image, c is raised to the power of 3 in Einstein's energy equation."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 5
+  },
+  {
+    "img_path": "images/6.png",
+    "Question": "Which ocean is between Europe and North America?",
+    "Response": "Pacific",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "According to the image, the ocean between Europe and North America is Pacific."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 6
+  },
+  {
+    "img_path": "images/7.png",
+    "Question": "What is Spain's GDP in 2021 in trillions of euros?",
+    "Response": "1.8",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "According to the image, Spain's GDP in 2021 is 1.8 trillion euros."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 7
+  },
+  {
+    "img_path": "images/8.png",
+    "Question": "To what exponent is the distance between bodies raised in the formula of universal gravitation?",
+    "Response": "3",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "In the image, the distance between bodies in the formula of universal gravitation is raised to the power of 3."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 8
+  },
+  {
+    "img_path": "images/9.png",
+    "Question": "What place appears on the welcome sign?",
+    "Response": "College Park",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "The welcome sign says College Park."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 9
+  },
+  {
+    "img_path": "images/10.png",
+    "Question": "What text appears in the logo?",
+    "Response": "Red Deer",
+    "hal_type": "ocr_text_error",
+    "claims": [
+      "The text in the logo is Red Deer."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 10
+  },
+  {
+    "img_path": "images/18.png",
+    "Question": "How many legs does the duck have?",
+    "Response": "2",
+    "hal_type": "counting_error",
+    "claims": [
+      "The duck has 2 legs."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 18
+  },
+  {
+    "img_path": "images/19.png",
+    "Question": "How many stars does the flag of the European Union have?",
+    "Response": "12",
+    "hal_type": "counting_error",
+    "claims": [
+      "The flag of the European Union has 12 stars."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 19
+  },
+  {
+    "img_path": "images/47.jpg",
+    "Question": "How many rows does the chessboard have?",
+    "Response": "8",
+    "hal_type": "counting_error",
+    "claims": [
+      "The chessboard has 8 rows."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 47
+  },
+  {
+    "img_path": "images/48.jpg",
+    "Question": "How many pieces are missing from the chessboard?",
+    "Response": "0",
+    "hal_type": "counting_error",
+    "claims": [
+      "There are 0 missing pieces on the chessboard."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 48
+  },
+  {
+    "img_path": "images/51.jpg",
+    "Question": "How many visible black stripes are there in the logo on the left shoe?",
+    "Response": "3",
+    "hal_type": "counting_error",
+    "claims": [
+      "There are 3 visible black stripes in the logo on the left shoe."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 51
+  },
+  {
+    "img_path": "images/52.jpg",
+    "Question": "How many legs does the dog have?",
+    "Response": "4",
+    "hal_type": "counting_error",
+    "claims": [
+      "The dog has 4 legs."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 52
+  },
+  {
+    "img_path": "images/53.jpg",
+    "Question": "How many wolves are in this pack?",
+    "Response": "6",
+    "hal_type": "counting_error",
+    "claims": [
+      "There are 6 wolves in this pack."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 53
+  },
+  {
+    "img_path": "images/54.jpg",
+    "Question": "How many different animal species can be seen?",
+    "Response": "4",
+    "hal_type": "counting_error",
+    "claims": [
+      "There are 4 different animal species visible."
+    ],
+    "claim_labels": [
+      "HALLUCINATED"
+    ],
+    "image_id": 54
+  },
+  {
+    "img_path": "images/1.png",
+    "Question": "Are the two orange circles the same size?",
+    "Response": "Yes",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The two orange circles are the same size."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 1
+  },
+  {
+    "img_path": "images/11.png",
+    "Question": "Are the two horizontal lines the same length?",
+    "Response": "Yes",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The two horizontal lines are the same length."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 11
+  },
+  {
+    "img_path": "images/25.jpg",
+    "Question": "What color is the London telephone box?",
+    "Response": "yellow",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The London telephone box is yellow."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 25
+  },
+  {
+    "img_path": "images/26.jpg",
+    "Question": "Is the front face of the Rubik's Cube purple?",
+    "Response": "Yes",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The front face of the Rubik's Cube is purple."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 26
+  },
+  {
+    "img_path": "images/29.jpg",
+    "Question": "What color is the STOP sign?",
+    "Response": "green",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The STOP sign is green."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 29
+  },
+  {
+    "img_path": "images/43.jpg",
+    "Question": "What color is the apple?",
+    "Response": "blue",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The apple is blue."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 43
+  },
+  {
+    "img_path": "images/49.jpg",
+    "Question": "Is the armchair made of wool?",
+    "Response": "no",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The armchair is not made of wool."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 49
+  },
+  {
+    "img_path": "images/50.jpg",
+    "Question": "Is the hammer made of glass?",
+    "Response": "yes",
+    "hal_type": "attribute_error",
+    "claims": [
+      "The hammer is made of glass."
+    ],
+    "claim_labels": [
+      "CORRECT"
+    ],
+    "image_id": 50
+  }
+]
