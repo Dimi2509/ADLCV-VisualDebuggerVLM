@@ -358,7 +358,6 @@ def compute_binary_metrics(
     for truth, pred in zip(y_true, y_pred, strict=True):
         if pred == "UNKNOWN":
             unknown += 1
-            continue
         truth_pos = truth == positive_label
         pred_pos = pred == positive_label
         if truth_pos and pred_pos:
@@ -370,7 +369,7 @@ def compute_binary_metrics(
         else:
             tn += 1
 
-    total = len(y_true) - unknown
+    total = len(y_true)
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     f1 = (
