@@ -1,0 +1,92 @@
+{
+  "model_name": "sft_model_20260425_112716",
+  "final_step": 2447,
+  "validation": {
+    "overall": {
+      "n_samples": 4865.0,
+      "accuracy": 0.8472764645426516,
+      "precision": 0.7369477911646586,
+      "recall": 0.3748723186925434,
+      "f1": 0.4969532836831414,
+      "tp": 367.0,
+      "fp": 131.0,
+      "fn": 612.0,
+      "tn": 3755.0,
+      "unknown_predictions": 2182.0
+    },
+    "per_hallucination_type": {
+      "action_event_error": {
+        "n_samples": 750.0,
+        "accuracy": 0.9306666666666666,
+        "precision": 0.7647058823529411,
+        "recall": 0.21311475409836064,
+        "f1": 0.3333333333333333,
+        "tp": 13.0,
+        "fp": 4.0,
+        "fn": 48.0,
+        "tn": 685.0,
+        "unknown_predictions": 360.0
+      },
+      "attribute_error": {
+        "n_samples": 1010.0,
+        "accuracy": 0.8891089108910891,
+        "precision": 0.5,
+        "recall": 0.03571428571428571,
+        "f1": 0.06666666666666667,
+        "tp": 4.0,
+        "fp": 4.0,
+        "fn": 108.0,
+        "tn": 894.0,
+        "unknown_predictions": 562.0
+      },
+      "counting_error": {
+        "n_samples": 787.0,
+        "accuracy": 0.6226175349428208,
+        "precision": 0.7384615384615385,
+        "recall": 0.45605700712589076,
+        "f1": 0.5638766519823789,
+        "tp": 192.0,
+        "fp": 68.0,
+        "fn": 229.0,
+        "tn": 298.0,
+        "unknown_predictions": 324.0
+      },
+      "object_existence": {
+        "n_samples": 786.0,
+        "accuracy": 0.9936386768447837,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0.0,
+        "fp": 0.0,
+        "fn": 5.0,
+        "tn": 781.0,
+        "unknown_predictions": 308.0
+      },
+      "ocr_text_error": {
+        "n_samples": 782.0,
+        "accuracy": 0.7736572890025576,
+        "precision": 0.7536231884057971,
+        "recall": 0.42105263157894735,
+        "f1": 0.5402597402597402,
+        "tp": 104.0,
+        "fp": 34.0,
+        "fn": 143.0,
+        "tn": 501.0,
+        "unknown_predictions": 337.0
+      },
+      "spatial_error": {
+        "n_samples": 750.0,
+        "accuracy": 0.8666666666666667,
+        "precision": 0.72,
+        "recall": 0.40601503759398494,
+        "f1": 0.5192307692307692,
+        "tp": 54.0,
+        "fp": 21.0,
+        "fn": 79.0,
+        "tn": 596.0,
+        "unknown_predictions": 291.0
+      }
+    }
+  }
+}
