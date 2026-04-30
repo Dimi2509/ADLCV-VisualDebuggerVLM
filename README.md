@@ -82,3 +82,9 @@ Use a custom image root directory:
 uv run modelBenchmarks.py --image-root /path/to/coco_subset
 ```
 
+# SFTTrainer
+The `SFTTrainer` class is a custom trainer for supervised fine-tuning of vision-language models. 
+
+To start training, run the following command in the terminal:
+```bash
+uv run python SFTTrainer.py --dataset-path datasets/big_generated_dataset.json --base-max-new-tokens 30 --num-train-epochs 1 --max-seq-length 30 --save-strategy steps --eval-strategy steps --save-steps 500 --eval-steps 500
