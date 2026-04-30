@@ -1,0 +1,67 @@
+{
+  "meta": {
+    "rows_total": 6000,
+    "rows_malformed_or_mismatch": 0,
+    "usable_claim_label_pairs": 19357,
+    "positive_label": "HALLUCINATED",
+    "negative_label": "CORRECT"
+  },
+  "overall": {
+    "total": 19357,
+    "HALLUCINATED": 3762,
+    "CORRECT": 15595,
+    "HALLUCINATED_pct": 19.43482977734153,
+    "CORRECT_pct": 80.56517022265847,
+    "other_labels": {}
+  },
+  "per_hallucination_type": {
+    "action_event_error": {
+      "total": 3000,
+      "HALLUCINATED": 248,
+      "CORRECT": 2752,
+      "HALLUCINATED_pct": 8.266666666666667,
+      "CORRECT_pct": 91.73333333333333,
+      "other_labels": {}
+    },
+    "attribute_error": {
+      "total": 3974,
+      "HALLUCINATED": 411,
+      "CORRECT": 3563,
+      "HALLUCINATED_pct": 10.342224458983392,
+      "CORRECT_pct": 89.6577755410166,
+      "other_labels": {}
+    },
+    "counting_error": {
+      "total": 3143,
+      "HALLUCINATED": 1622,
+      "CORRECT": 1521,
+      "HALLUCINATED_pct": 51.60674514794782,
+      "CORRECT_pct": 48.39325485205218,
+      "other_labels": {}
+    },
+    "object_existence": {
+      "total": 3109,
+      "HALLUCINATED": 25,
+      "CORRECT": 3084,
+      "HALLUCINATED_pct": 0.8041170794467675,
+      "CORRECT_pct": 99.19588292055323,
+      "other_labels": {}
+    },
+    "ocr_text_error": {
+      "total": 3131,
+      "HALLUCINATED": 913,
+      "CORRECT": 2218,
+      "HALLUCINATED_pct": 29.160012775471095,
+      "CORRECT_pct": 70.8399872245289,
+      "other_labels": {}
+    },
+    "spatial_error": {
+      "total": 3000,
+      "HALLUCINATED": 543,
+      "CORRECT": 2457,
+      "HALLUCINATED_pct": 18.1,
+      "CORRECT_pct": 81.9,
+      "other_labels": {}
+    }
+  }
+}
