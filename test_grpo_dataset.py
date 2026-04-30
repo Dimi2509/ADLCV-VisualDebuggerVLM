@@ -10,11 +10,7 @@ from datasets import Dataset
 from grpo_dataset import to_grpo_format, _build_prompt_messages
 
 
-# ---------------------------------------------------------------------------
-# Test fixtures
-# ---------------------------------------------------------------------------
 def _make_dummy_image(path: Path) -> None:
-    """Write a tiny 4x4 RGB JPEG so tests don't depend on real VG images."""
     Image.new("RGB", (4, 4), color=(123, 222, 64)).save(path, format="JPEG")
 
 
@@ -46,24 +42,23 @@ def _make_exploded_dataset(tmp_dir: Path) -> Dataset:
 # _build_prompt_messages
 # ---------------------------------------------------------------------------
 def test_build_prompt_messages_structure():
-    img = Image.new("RGB", (2, 2))
-    msgs = _build_prompt_messages(img, "There is a duck.")
+    """prompt should have one user message with an image placeholder + text."""
+    msgs = _build_prompt_messages("There is a duck.")
     assert isinstance(msgs, list) and len(msgs) == 1
     assert msgs[0]["role"] == "user"
     content = msgs[0]["content"]
     assert len(content) == 2
     assert content[0]["type"] == "image"
-    assert content[0]["image"] is img
+    # CRITICAL: no "image" key at this stage — image is bound separately.
+    assert "image" not in content[0]
     assert content[1]["type"] == "text"
     assert "There is a duck." in content[1]["text"]
 
 
 def test_build_prompt_uses_model_prompt_template():
-    """The text portion should match SFT's MODEL_PROMPT for train/eval consistency."""
     from SFTTrain import MODEL_PROMPT
 
-    img = Image.new("RGB", (2, 2))
-    msgs = _build_prompt_messages(img, "test claim")
+    msgs = _build_prompt_messages("test claim")
     text = msgs[0]["content"][1]["text"]
     assert text == MODEL_PROMPT.format(claim="test claim")
 
@@ -73,47 +68,38 @@ def test_build_prompt_uses_model_prompt_template():
 # ---------------------------------------------------------------------------
 def test_to_grpo_format_columns(tmp_path: Path):
     ds = _make_exploded_dataset(tmp_path)
-    grpo_ds = to_grpo_format(ds, load_images=True)
-    # Only the columns we need should remain.
-    assert set(grpo_ds.column_names) == {"prompt", "label_text", "hal_type"}
+    grpo_ds = to_grpo_format(ds)
+    assert set(grpo_ds.column_names) == {"prompt", "image", "label_text", "hal_type"}
     assert len(grpo_ds) == 2
 
 
 def test_to_grpo_format_preserves_labels(tmp_path: Path):
     ds = _make_exploded_dataset(tmp_path)
-    grpo_ds = to_grpo_format(ds, load_images=True)
+    grpo_ds = to_grpo_format(ds)
     assert grpo_ds[0]["label_text"] == "CORRECT"
     assert grpo_ds[1]["label_text"] == "HALLUCINATED"
     assert grpo_ds[0]["hal_type"] == "object_existence"
     assert grpo_ds[1]["hal_type"] == "counting_error"
 
 
-def test_to_grpo_format_loads_images_when_asked(tmp_path: Path):
+def test_to_grpo_format_image_is_pil(tmp_path: Path):
+    """datasets.Image() feature should decode paths back into PIL images on access."""
     ds = _make_exploded_dataset(tmp_path)
-    grpo_ds = to_grpo_format(ds, load_images=True)
-    image_field = grpo_ds[0]["prompt"][0]["content"][0]["image"]
-    # When datasets stores PIL images, they may come back as PIL.Image or as
-    # bytes/dict — what we care about is that it's not the raw path string.
-    assert not isinstance(image_field, str)
-
-
-def test_to_grpo_format_keeps_paths_when_not_loading(tmp_path: Path):
-    ds = _make_exploded_dataset(tmp_path)
-    grpo_ds = to_grpo_format(ds, load_images=False)
-    image_field = grpo_ds[0]["prompt"][0]["content"][0]["image"]
-    assert isinstance(image_field, str)
-    assert image_field.endswith(".jpg")
+    grpo_ds = to_grpo_format(ds)
+    img = grpo_ds[0]["image"]
+    assert isinstance(img, Image.Image)
+    assert img.size == (4, 4)
 
 
 def test_to_grpo_format_text_contains_claim(tmp_path: Path):
     ds = _make_exploded_dataset(tmp_path)
-    grpo_ds = to_grpo_format(ds, load_images=False)
+    grpo_ds = to_grpo_format(ds)
     text = grpo_ds[1]["prompt"][0]["content"][1]["text"]
     assert "There are 5 dogs." in text
 
 
 def test_to_grpo_format_missing_columns_raises(tmp_path: Path):
-    ds = Dataset.from_list([{"img_path": "x", "claim": "y"}])  # missing label_text, hal_type
+    ds = Dataset.from_list([{"img_path": "x", "claim": "y"}])
     try:
         to_grpo_format(ds)
     except ValueError as e:
@@ -126,6 +112,7 @@ def test_to_grpo_format_missing_columns_raises(tmp_path: Path):
 # Manual run
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
+    import inspect
     import tempfile
 
     tests = [(k, v) for k, v in globals().items() if k.startswith("test_")]
@@ -134,8 +121,6 @@ if __name__ == "__main__":
         try:
             with tempfile.TemporaryDirectory() as td:
                 tmp = Path(td)
-                # Pass tmp_path if the test takes one, otherwise call directly.
-                import inspect
                 params = inspect.signature(fn).parameters
                 if "tmp_path" in params:
                     fn(tmp)
