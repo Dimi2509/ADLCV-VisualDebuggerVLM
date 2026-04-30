@@ -10,7 +10,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import torch
 import PIL.Image
-from datasets import Dataset, DatasetDict, Value, load_dataset
+from datasets import Dataset, DatasetDict, Value, concatenate_datasets, load_dataset
 from tqdm import tqdm
 from transformers import (AutoModelForImageTextToText, AutoProcessor,
                           TrainerCallback)
@@ -825,6 +825,66 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def oversample_dataset(dataset: Dataset, oversample_ratio: float, target_types: list[str], seed: int) -> Dataset:
+    """
+    Balance the dataset by oversampling HALLUCINATION labels up to a specified ratio for given target_types, returning a new dataset.
+    """
+    hallucinations_per_type = {hal_type: [] for hal_type in target_types}
+    correct_per_type = {hal_type: [] for hal_type in target_types}
+    for hal_type in target_types:
+        hallucinations_per_type[hal_type] = dataset.filter(
+            lambda x: x["label_text"] == "HALLUCINATED" and x.get("hal_type") == hal_type
+        )
+        correct_per_type[hal_type] = dataset.filter(
+            lambda x: x["label_text"] == "CORRECT" and x.get("hal_type") == hal_type
+        )
+
+    augmented_rows = []
+    for hal_type, hal_dataset in hallucinations_per_type.items():
+        n_hallucinated = len(hal_dataset)
+        n_correct = len(correct_per_type[hal_type])
+
+        n_to_add = int(n_correct * oversample_ratio) - n_hallucinated
+        print(f"Oversampling type '{hal_type}': {n_hallucinated} -> {n_hallucinated + max(n_to_add, 0)} samples (adding {max(n_to_add, 0)}) to reach ratio {oversample_ratio:.2f}")
+
+        shuffled_hal_dataset = hal_dataset.shuffle(seed=seed)
+        full_repeats, remainder = divmod(n_to_add, n_hallucinated)
+        repeated_parts = [shuffled_hal_dataset] * full_repeats
+        if remainder > 0:
+            repeated_parts.append(shuffled_hal_dataset.select(range(remainder)))
+
+        if repeated_parts:
+            augmented_rows.extend(concatenate_datasets(repeated_parts))
+
+    if not augmented_rows:
+        return dataset
+
+    augmented_dataset = Dataset.from_list(augmented_rows)
+    augmented_dataset = augmented_dataset.cast_column("image_id", Value("int32"))
+    print(f"Augmented dataset keys: {augmented_dataset[0]}")
+    combined = concatenate_datasets([dataset, augmented_dataset])
+    combined = combined.shuffle(seed=seed)
+    return combined       
+
+
+def print_dataset_balance(split_dataset: DatasetDict) -> None:
+    # Quickly plot the number of CORRECT vs HALLUCINATED samples in the training set to check balance overall and per hallucination type
+    label_counts = {"overall": {"CORRECT": 0, "HALLUCINATED": 0}, "per_hallucination_type": {}}
+    for item in split_dataset:
+        label = item["label_text"]
+        hal_type = item.get("hal_type", "unknown")
+        if label in ["CORRECT", "HALLUCINATED"]:
+            label_counts["overall"][label] += 1
+            label_counts["per_hallucination_type"].setdefault(hal_type, {"CORRECT": 0, "HALLUCINATED": 0})
+            label_counts["per_hallucination_type"][hal_type][label] += 1
+    
+    print("\nTraining set label distribution:")
+    overall_counts = label_counts["overall"]
+    print(f"  Overall: CORRECT={overall_counts['CORRECT']}, HALLUCINATED={overall_counts['HALLUCINATED']}")
+    print("  By hallucination type:")
+    for hal_type, counts in label_counts["per_hallucination_type"].items():
+        print(f"    {hal_type}: CORRECT={counts['CORRECT']}, HALLUCINATED={counts['HALLUCINATED']}")
+
 if __name__ == "__main__":
     args = parse_args()
     SFTConfig, SFTTrainer = import_trl_sft()
@@ -859,6 +919,11 @@ if __name__ == "__main__":
     for split_name, split_data in split_dataset.items():
         print(f"  {split_name}: {len(split_data)} samples")
 
+    print("\nChecking dataset balance before oversampling...")
+    print_dataset_balance(split_dataset["train"]) # Before oversampling
+    new_dataset = oversample_dataset(split_dataset["train"], oversample_ratio=0.7, target_types=["attribute_error", "spatial_error", "ocr_text_error", "action_event_error"], seed=args.train_seed)
+    print("\nChecking dataset balance after oversampling...")
+    print_dataset_balance(new_dataset) # After oversampling
     device = pick_device()
     model, processor = load_vlm(args.model, device)
     collator = build_collator(processor, args.max_seq_length)
