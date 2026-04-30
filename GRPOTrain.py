@@ -392,7 +392,32 @@ def build_grpo_config(args: argparse.Namespace, model_output_dir: Path, device: 
     )
     return config
 
+# ---------------------------------------------------------------------------
+# GRPOTrainer importer (same UTF-8 trick as GRPOConfig)
+# ---------------------------------------------------------------------------
+def import_grpo_trainer() -> Any:
+    """Import trl.GRPOTrainer with a UTF-8 locale patch — same trick as
+    build_grpo_config. trl's import touches pyproject.toml via Path.read_text,
+    which on Windows defaults to cp1252 and chokes on non-ASCII bytes."""
+    original_getpreferredencoding = locale.getpreferredencoding
+    original_read_text = Path.read_text
 
+    def _utf8_preferred_encoding(do_setlocale: bool = True) -> str:
+        return "utf-8"
+
+    def _read_text_utf8(
+        self: Path, encoding: str | None = None, errors: str | None = None
+    ) -> str:
+        return original_read_text(self, encoding=encoding or "utf-8", errors=errors)
+
+    locale.getpreferredencoding = _utf8_preferred_encoding
+    Path.read_text = _read_text_utf8
+    try:
+        from trl import GRPOTrainer
+    finally:
+        locale.getpreferredencoding = original_getpreferredencoding
+        Path.read_text = original_read_text
+    return GRPOTrainer
 
 def main() -> None:
     args = parse_args()
@@ -469,9 +494,92 @@ def main() -> None:
     print(f"  output_dir:               {grpo_config.output_dir}")
     print()
 
+    #print("=" * 70)
+    #print("All preflight checks passed.")
+    #print("(Trainer instantiation + train() coming in next sub-section.)")
+    #print("=" * 70)
+    # ========================================================================
+    # Trainer instantiation + train() + save
+    # ========================================================================
     print("=" * 70)
-    print("All preflight checks passed.")
-    print("(Trainer instantiation + train() coming in next sub-section.)")
+    print("Instantiating GRPOTrainer...")
+    print("=" * 70)
+    GRPOTrainer = import_grpo_trainer()
+
+    trainer = GRPOTrainer(
+        model=model,
+        reward_funcs=reward_func,
+        args=grpo_config,
+        train_dataset=grpo_train,
+        # NOTE: we deliberately don't pass eval_dataset. GRPO eval at training
+        # time is non-trivial (needs rollouts on the eval set) and would slow
+        # the smoke test to a crawl. We evaluate offline using EvaluateModels.py
+        # after training finishes — same protocol used for SFT, so the three
+        # configurations (baseline / SFT / SFT+GRPO) stay directly comparable.
+        processing_class=processor,
+        # peft_config intentionally omitted (=None). The model already has the
+        # SFT LoRA adapter from load_base_model_with_sft_adapter, and trl will
+        # continue training that same adapter. Passing a fresh peft_config would
+        # stack a new adapter on top, freezing the SFT one — that's not what
+        # we want.
+    )
+
+    # Rough math so you know what to expect before kicking off train().
+    effective_batch = (
+        grpo_config.per_device_train_batch_size
+        * grpo_config.gradient_accumulation_steps
+    )
+    estimated_steps = max(1, len(grpo_train) // effective_batch)
+    print(f"Trainer ready.")
+    print(f"  Train samples:           {len(grpo_train)}")
+    print(f"  Effective batch:         {effective_batch} (= {grpo_config.per_device_train_batch_size} x {grpo_config.gradient_accumulation_steps})")
+    print(f"  Estimated optimizer steps: ~{estimated_steps} per epoch")
+    print(f"  Generations per step:    {effective_batch * grpo_config.num_generations}")
+    print()
+
+    # ========================================================================
+    # Train
+    # ========================================================================
+    print("=" * 70)
+    print("Starting GRPO training...")
+    print("=" * 70)
+    train_result = trainer.train()
+    print(f"\nTraining complete.")
+    print(f"  Final training loss: {train_result.training_loss:.4f}")
+    print(f"  Total steps:         {train_result.global_step}")
+    print()
+
+    # ========================================================================
+    # Save adapter + processor + log history
+    # ========================================================================
+    print("=" * 70)
+    print(f"Saving artifacts to {model_output_dir}")
+    print("=" * 70)
+
+    # save_model on a PEFT-wrapped model saves only the LoRA adapter weights
+    # (a few MB), not the whole 2B-param base model. Same convention as SFT.
+    trainer.save_model(model_output_dir.as_posix())
+    processor.save_pretrained(model_output_dir.as_posix())
+    print(f"  Saved adapter + processor")
+
+    # The full log history (per-step loss, reward stats, KL divergence,
+    # completion length, etc.) is invaluable for the report — save it now
+    # so we can plot reward-over-time later.
+    log_history = trainer.state.log_history
+    history_path = metrics_dir / "grpo_log_history.json"
+    history_path.write_text(
+        json.dumps(log_history, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    print(f"  Saved training log history to {history_path}")
+    print()
+
+    print("=" * 70)
+    print("GRPO training run complete.")
+    print(f"  Adapter: {model_output_dir}")
+    print(f"  Metrics: {metrics_dir}")
+    print()
+    print("Next: evaluate with EvaluateModels.py --model-type sft-grpo")
+    print(f"      --adapter-path {model_output_dir}")
     print("=" * 70)
 
 
