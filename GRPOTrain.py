@@ -299,10 +299,101 @@ def build_lora_config(args: argparse.Namespace) -> Any:
         target_modules=target_modules,
     )
 
+# ---------------------------------------------------------------------------
+# Dataset pipeline
+# ---------------------------------------------------------------------------
+def prepare_grpo_datasets(args: argparse.Namespace) -> tuple:
+    """
+    Build train/val/test datasets in GRPOTrainer format, using the exact
+    same split logic as SFT (so test set is the same set of images).
+    """
+    print(f"Loading dataset from {args.dataset_path}")
+    raw = load_dataset("json", data_files=args.dataset_path, num_proc=1)["train"]
+
+    print("Exploding to claim-level rows...")
+    exploded = explode_claim_level_rows(raw, args.images_dir)
+    print(f"  Total claim-level rows: {len(exploded)}")
+
+    print("Splitting train/val/test (image-level)...")
+    splits = split_full_dataset(
+        dataset=exploded,
+        split_ratios=list(args.train_val_test_split),
+        seed=args.train_seed,
+    )
+    for name, ds in splits.items():
+        print(f"  {name}: {len(ds)}")
+
+    print("Adapting splits to GRPO format...")
+    grpo_train = to_grpo_format(splits["train"], load_images=True)
+    grpo_val = to_grpo_format(splits["validation"], load_images=True)
+
+    # Optional cap for smoke testing — only on train. Eval splits stay full.
+    if args.max_train_samples and args.max_train_samples > 0:
+        cap = min(args.max_train_samples, len(grpo_train))
+        grpo_train = grpo_train.select(range(cap))
+        print(f"  [smoke test] Capped train set to {cap} samples")
+
+    return grpo_train, grpo_val, splits  # raw splits returned for later eval
+
 
 # ---------------------------------------------------------------------------
-# Placeholder main — we'll fill this in subsequent sub-sections
+# GRPO config builder
 # ---------------------------------------------------------------------------
+def build_grpo_config(args: argparse.Namespace, model_output_dir: Path, device: torch.device):
+    """
+    Translate our argparse args into a trl GRPOConfig.
+
+    A note on import: trl loads its config via `pyproject.toml` reads, which
+    on some Windows setups picks up a non-UTF-8 default encoding. We patch
+    the same way SFTTrain does — temporarily forcing UTF-8 — to match.
+    """
+    original_getpreferredencoding = locale.getpreferredencoding
+    original_read_text = Path.read_text
+
+    def _utf8_preferred_encoding(do_setlocale: bool = True) -> str:
+        return "utf-8"
+
+    def _read_text_utf8(self: Path, encoding: str | None = None, errors: str | None = None) -> str:
+        return original_read_text(self, encoding=encoding or "utf-8", errors=errors)
+
+    locale.getpreferredencoding = _utf8_preferred_encoding
+    Path.read_text = _read_text_utf8
+    try:
+        from trl import GRPOConfig
+    finally:
+        locale.getpreferredencoding = original_getpreferredencoding
+        Path.read_text = original_read_text
+
+    config = GRPOConfig(
+        output_dir=model_output_dir.as_posix(),
+        use_cpu=(device.type == "cpu"),
+        # --- GRPO core ---
+        num_generations=args.num_generations,
+        max_completion_length=args.max_completion_length,
+        #max_prompt_length=args.max_prompt_length,
+        temperature=args.temperature,
+        beta=args.beta,
+        # --- Optimisation ---
+        learning_rate=args.lr,
+        num_train_epochs=args.num_train_epochs,
+        per_device_train_batch_size=args.per_device_train_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        # --- Logging / saving ---
+        logging_steps=args.logging_steps,
+        save_strategy=args.save_strategy,
+        save_steps=args.save_steps,
+        report_to="none",
+        log_completions=True,  # writes a few example completions to logs — useful for debugging
+        # --- Reproducibility ---
+        seed=args.train_seed,
+        data_seed=args.train_seed,
+        # --- Misc ---
+        remove_unused_columns=False,  # we need label_text/hal_type passed to reward_func
+    )
+    return config
+
+
+
 def main() -> None:
     args = parse_args()
     print("=" * 70)
@@ -319,19 +410,69 @@ def main() -> None:
     print(f"Reward mode:  {'weighted' if args.reward_weighted else 'unweighted ±1'}")
     print()
 
+    # --- Output paths ---
+    run_name = (
+        args.model_name.strip() or f"grpo_model_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    )
+    model_output_dir = Path(args.model_output) / run_name
+    metrics_dir = Path(args.metrics_dir) / run_name
+    model_output_dir.mkdir(parents=True, exist_ok=True)
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Run name:        {run_name}")
+    print(f"Model output:    {model_output_dir}")
+    print(f"Metrics output:  {metrics_dir}")
+    print()
+
+    # --- Datasets ---
+    grpo_train, grpo_val, raw_splits = prepare_grpo_datasets(args)
+    print(f"\nGRPO train sample[0] keys: {list(grpo_train[0].keys())}")
+    print(f"GRPO train sample[0] label_text: {grpo_train[0]['label_text']}")
+    print(f"GRPO train sample[0] hal_type:   {grpo_train[0]['hal_type']}")
+    prompt_text_preview = grpo_train[0]["prompt"][0]["content"][1]["text"][:120]
+    print(f"GRPO train sample[0] prompt text (first 120 chars):\n  {prompt_text_preview}...")
+    print(f"GRPO train sample[0] image type: {type(grpo_train[0]['image']).__name__}")
+    print(f"GRPO train sample[0] image size: {grpo_train[0]['image'].size}")
+    print()
+
+    # --- Model ---
     device = pick_device()
     print(f"Device: {device}")
-
-    # Quick smoke test: can we load the SFT-adapted model?
     model, processor = load_base_model_with_sft_adapter(
         args.base_model, args.sft_adapter_path, device
     )
-
-    # Print trainable parameter count to confirm LoRA is engaged
     if hasattr(model, "print_trainable_parameters"):
         model.print_trainable_parameters()
+    print()
 
-    print("\nModel + adapter loaded successfully. (Training loop coming in the next sub-section.)")
+    # --- Reward function ---
+    reward_func = make_reward_func(weighted=args.reward_weighted)
+
+    # Quick reward function smoke test on a tiny batch
+    print("Reward function smoke test...")
+    fake_completions = [
+        [{"role": "assistant", "content": "CORRECT"}],
+        [{"role": "assistant", "content": "HALLUCINATED"}],
+    ]
+    fake_labels = ["CORRECT", "HALLUCINATED"]
+    fake_rewards = reward_func(fake_completions, label_text=fake_labels)
+    print(f"  fake_completions -> rewards: {fake_rewards}")
+    print()
+
+    # --- GRPO config ---
+    grpo_config = build_grpo_config(args, model_output_dir, device)
+    print("GRPOConfig built successfully.")
+    print(f"  num_generations:          {grpo_config.num_generations}")
+    print(f"  beta (KL coefficient):    {grpo_config.beta}")
+    print(f"  learning_rate:            {grpo_config.learning_rate}")
+    print(f"  per_device_train_bsz:     {grpo_config.per_device_train_batch_size}")
+    print(f"  gradient_accumulation:    {grpo_config.gradient_accumulation_steps}")
+    print(f"  output_dir:               {grpo_config.output_dir}")
+    print()
+
+    print("=" * 70)
+    print("All preflight checks passed.")
+    print("(Trainer instantiation + train() coming in next sub-section.)")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
