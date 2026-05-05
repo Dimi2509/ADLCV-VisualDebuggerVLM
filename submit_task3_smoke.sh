@@ -53,6 +53,7 @@ else
 fi
 
 MODEL_NAME="${MODEL_NAME:-Qwen/Qwen3-VL-2B-Instruct}"
+PROMPT="${PROMPT:-Describe the image in one concise paragraph. Only mention visible evidence.}"
 POPE_FILE="${POPE_FILE:-data/benchmark/pope/coco_pope_popular.json}"
 IMAGE_ROOT="${IMAGE_ROOT:-data/benchmark/coco_subset}"
 MAX_SAMPLES="${MAX_SAMPLES:-1}"
@@ -67,6 +68,7 @@ echo "Job started on: $(hostname)"
 echo "Date: $(date)"
 echo "Working directory: $(pwd)"
 echo "MODEL_NAME=$MODEL_NAME"
+echo "PROMPT=$PROMPT"
 echo "VENV_DIR=$VENV_DIR"
 echo "PYTHON_BIN=$PYTHON_BIN"
 echo "HF_HOME=$HF_HOME"
@@ -87,6 +89,7 @@ echo
 
 "$PYTHON_BIN" task3_pipeline.py \
   --model-name "$MODEL_NAME" \
+  --prompt "$PROMPT" \
   $VERIFIER_ARGS \
   --pope-file "$POPE_FILE" \
   --image-root "$IMAGE_ROOT" \

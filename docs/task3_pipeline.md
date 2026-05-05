@@ -70,6 +70,7 @@ Useful overrides:
 
 ```bash
 MODEL_NAME=HuggingFaceTB/SmolVLM-500M-Instruct \
+PROMPT="Describe the image in one concise paragraph. Only mention visible evidence." \
 MAX_SAMPLES=1 \
 MAX_NEW_TOKENS=32 \
 VERIFIER_MAX_NEW_TOKENS=128 \
@@ -91,8 +92,29 @@ python task3_pipeline.py \
   --pope-file data/benchmark/pope/coco_pope_popular.json \
   --image-root data/benchmark/coco_subset \
   --max-samples 20 \
+  --generation-do-sample \
+  --generation-temperature 0.8 \
+  --generation-top-p 0.9 \
   --skip-missing-images \
   --output outputs/task3_popular.jsonl
+```
+
+## Stress correction-loop run
+
+Use a claim-rich prompt, sampled initial generation, and strict claim-mode
+verification when you want to test whether the correction loop actually edits
+flagged claims:
+
+```bash
+PROMPT="Describe the image in 5-7 specific visual claims. Include visible objects, attributes, counts, spatial relationships, and actions. Be detailed and concrete." \
+MAX_SAMPLES=50 \
+NUM_CANDIDATES=1 \
+MAX_NEW_TOKENS=160 \
+VERIFIER_ARGS="--verifier-mode claim" \
+TASK3_EXTRA_ARGS="--generation-do-sample --generation-temperature 0.8 --generation-top-p 0.9" \
+POPE_FILE=data/benchmark/pope/coco_pope_popular.json \
+OUTPUT_FILE=outputs/task3_pope_popular_50_stress_claimverifier.jsonl \
+bash scripts/submit_task3_gpu.sh
 ```
 
 ## Best-of-N baseline

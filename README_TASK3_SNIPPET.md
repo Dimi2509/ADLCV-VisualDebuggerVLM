@@ -57,5 +57,19 @@ python task3_pipeline.py \
   --output outputs/task3_popular.jsonl
 ```
 
+Run a stress test intended to produce real correction-loop edits:
+
+```bash
+PROMPT="Describe the image in 5-7 specific visual claims. Include visible objects, attributes, counts, spatial relationships, and actions. Be detailed and concrete." \
+MAX_SAMPLES=50 \
+NUM_CANDIDATES=1 \
+MAX_NEW_TOKENS=160 \
+VERIFIER_ARGS="--verifier-mode claim" \
+TASK3_EXTRA_ARGS="--generation-do-sample --generation-temperature 0.8 --generation-top-p 0.9" \
+POPE_FILE=data/benchmark/pope/coco_pope_popular.json \
+OUTPUT_FILE=outputs/task3_pope_popular_50_stress_claimverifier.jsonl \
+bash scripts/submit_task3_gpu.sh
+```
+
 When the Task 2 verifier is finished, pass it via `--verifier-model-name` or
 `--verifier-adapter-path`.

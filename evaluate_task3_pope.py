@@ -41,31 +41,56 @@ def is_hallucinated_claim(claim: dict[str, Any]) -> bool:
     return str(claim.get("label", "")).strip().upper() == "HALLUCINATED"
 
 
+def is_parse_failure_claim(claim: dict[str, Any]) -> bool:
+    return str(claim.get("claim", "")).strip() == "UNPARSEABLE_VERIFICATION_OUTPUT"
+
+
 def summarize_verification(records: list[dict[str, Any]], field: str) -> dict[str, Any]:
     rows = [r for r in records if isinstance(r.get(field), list)]
     claim_counts = [len(r[field]) for r in rows]
     hallucinated_counts = [
-        sum(is_hallucinated_claim(claim) for claim in r[field]) for r in rows
+        sum(
+            is_hallucinated_claim(claim) and not is_parse_failure_claim(claim)
+            for claim in r[field]
+        )
+        for r in rows
+    ]
+    parse_failure_counts = [
+        sum(is_parse_failure_claim(claim) for claim in r[field]) for r in rows
     ]
     total_claims = sum(claim_counts)
     total_hallucinated = sum(hallucinated_counts)
+    total_parse_failures = sum(parse_failure_counts)
 
     return {
         "samples_evaluated": len(rows),
         "total_claims": total_claims,
         "total_flagged_hallucinated_claims": total_hallucinated,
+        "total_unparseable_verification_outputs": total_parse_failures,
         "avg_claims_per_sample": mean(claim_counts) if claim_counts else 0.0,
         "avg_flagged_hallucinated_claims_per_sample": (
             mean(hallucinated_counts) if hallucinated_counts else 0.0
         ),
+        "avg_unparseable_verification_outputs_per_sample": (
+            mean(parse_failure_counts) if parse_failure_counts else 0.0
+        ),
         "samples_with_any_flagged_hallucination": sum(
             count > 0 for count in hallucinated_counts
+        ),
+        "samples_with_any_unparseable_verification": sum(
+            count > 0 for count in parse_failure_counts
         ),
         "sample_flagged_hallucination_rate": (
             sum(count > 0 for count in hallucinated_counts) / len(rows) if rows else 0.0
         ),
+        "sample_unparseable_verification_rate": (
+            sum(count > 0 for count in parse_failure_counts) / len(rows) if rows else 0.0
+        ),
         "claim_flagged_hallucination_rate": (
             total_hallucinated / total_claims if total_claims else 0.0
+        ),
+        "claim_unparseable_verification_rate": (
+            total_parse_failures / total_claims if total_claims else 0.0
         ),
     }
 
@@ -267,7 +292,8 @@ def print_text_report(metrics: dict[str, Any]) -> None:
             f"  {name}: avg flagged/sample="
             f"{row['avg_flagged_hallucinated_claims_per_sample']:.3f}, "
             f"sample flagged rate={format_percent(row['sample_flagged_hallucination_rate'])}, "
-            f"claim flagged rate={format_percent(row['claim_flagged_hallucination_rate'])}"
+            f"claim flagged rate={format_percent(row['claim_flagged_hallucination_rate'])}, "
+            f"parse failures={row['total_unparseable_verification_outputs']}"
         )
     print()
 

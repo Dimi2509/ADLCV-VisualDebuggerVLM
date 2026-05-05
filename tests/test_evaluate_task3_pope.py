@@ -45,7 +45,13 @@ class Task3PopeEvaluatorTests(unittest.TestCase):
             },
             {
                 "single_pass_response": "A person is skiing on snow.",
-                "verification": [{"claim": "A person is skiing on snow.", "label": "CORRECT"}],
+                "verification": [
+                    {"claim": "A person is skiing on snow.", "label": "CORRECT"},
+                    {
+                        "claim": "UNPARSEABLE_VERIFICATION_OUTPUT",
+                        "label": "HALLUCINATED",
+                    },
+                ],
                 "corrected_response": "A person is skiing on snow.",
                 "best_of_n_response": None,
                 "best_of_n_verification": None,
@@ -65,6 +71,18 @@ class Task3PopeEvaluatorTests(unittest.TestCase):
         self.assertEqual(
             metrics["verifier_flag_metrics"]["single_pass"][
                 "total_flagged_hallucinated_claims"
+            ],
+            1,
+        )
+        self.assertEqual(
+            metrics["verifier_flag_metrics"]["single_pass"][
+                "total_unparseable_verification_outputs"
+            ],
+            1,
+        )
+        self.assertEqual(
+            metrics["verifier_flag_metrics"]["single_pass"][
+                "samples_with_any_flagged_hallucination"
             ],
             1,
         )

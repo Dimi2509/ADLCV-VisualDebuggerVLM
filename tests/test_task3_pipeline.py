@@ -70,6 +70,57 @@ class Task3PipelineUnitTests(unittest.TestCase):
         self.assertEqual([claim.label for claim in verification], ["CORRECT", "HALLUCINATED"])
         self.assertEqual(verification[1].claim, "A cat is visible.")
 
+    def test_claim_verifier_prompt_is_strict_about_visible_evidence(self):
+        prompt = t3.claim_verification_prompt("A cat is visible.")
+        self.assertIn("exactly one token: CORRECT or HALLUCINATED", prompt)
+        self.assertIn("directly supported by visible evidence", prompt)
+        self.assertIn("plausible but not clearly visible", prompt)
+
+    def test_run_loop_uses_sampling_only_for_initial_generation(self):
+        calls = []
+
+        def fake_generate(*args, **kwargs):
+            calls.append(kwargs)
+            if len(calls) == 1:
+                return "A person is skiing near a red car."
+            if len(calls) == 2:
+                return json.dumps(
+                    {
+                        "claims": [
+                            {
+                                "id": 1,
+                                "claim": "A person is skiing near a red car.",
+                                "label": "HALLUCINATED",
+                                "reason": "No car is visible.",
+                            }
+                        ]
+                    }
+                )
+            return "A person is skiing on snow."
+
+        with patch.object(t3, "generate_text", side_effect=fake_generate):
+            t3.run_loop(
+                generator_model=object(),
+                generator_processor=object(),
+                verifier_model=object(),
+                verifier_processor=object(),
+                device=object(),
+                image_path="image.jpg",
+                prompt=t3.DEFAULT_PROMPT,
+                verifier_mode="json",
+                max_new_tokens=64,
+                verifier_max_new_tokens=128,
+                generation_do_sample=True,
+                generation_temperature=0.8,
+                generation_top_p=0.9,
+            )
+
+        self.assertTrue(calls[0]["do_sample"])
+        self.assertEqual(calls[0]["temperature"], 0.8)
+        self.assertEqual(calls[0]["top_p"], 0.9)
+        self.assertFalse(calls[1]["do_sample"])
+        self.assertFalse(calls[2]["do_sample"])
+
     def test_correct_response_short_circuits_when_nothing_flagged(self):
         response = "A concise visible-only caption."
         verification = [t3.VerificationClaim(id=1, claim=response, label="CORRECT")]

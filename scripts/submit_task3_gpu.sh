@@ -5,6 +5,7 @@ PROJECT_DIR="${PROJECT_DIR:-/zhome/32/b/227378/ADLCV-VisualDebuggerVLM}"
 cd "$PROJECT_DIR"
 
 MODEL_NAME="${MODEL_NAME:-Qwen/Qwen3-VL-2B-Instruct}"
+PROMPT="${PROMPT:-Describe the image in one concise paragraph. Only mention visible evidence.}"
 POPE_FILE="${POPE_FILE:-data/benchmark/pope/coco_pope_popular.json}"
 IMAGE_ROOT="${IMAGE_ROOT:-data/benchmark/coco_subset}"
 MAX_SAMPLES="${MAX_SAMPLES:-1}"
@@ -18,6 +19,7 @@ VENV_DIR="${VENV_DIR:-$PROJECT_DIR/.venv}"
 PYTHON_MODULE="${PYTHON_MODULE:-python3/3.12.11}"
 
 export MODEL_NAME
+export PROMPT
 export POPE_FILE
 export IMAGE_ROOT
 export MAX_SAMPLES

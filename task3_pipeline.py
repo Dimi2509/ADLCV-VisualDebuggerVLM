@@ -53,9 +53,11 @@ except Exception:  # pragma: no cover - tqdm is a convenience only.
 DEFAULT_MODEL = "Qwen/Qwen3-VL-2B-Instruct"
 DEFAULT_PROMPT = "Describe the image in one concise paragraph. Only mention visible evidence."
 CLAIM_LABEL_PROMPT = (
-    "You are an expert assistant for determining whether a claim is correct or "
-    "incorrect based on the provided image and claim.\n"
+    "You are an expert visual verifier. Determine whether the claim is directly "
+    "supported by visible evidence in the provided image.\n"
     "Your answer must be exactly one token: CORRECT or HALLUCINATED.\n"
+    "Answer CORRECT only if the claim is clearly visible in the image.\n"
+    "If the claim is plausible but not clearly visible, answer HALLUCINATED.\n"
     "Claim: {claim}\n"
 )
 LOCAL_SAMPLE_IMAGE = "data/benchmark/coco_subset/COCO_val2014_000000310196.jpg"
@@ -418,6 +420,9 @@ def run_loop(
     verifier_mode: str,
     max_new_tokens: int,
     verifier_max_new_tokens: int,
+    generation_do_sample: bool = False,
+    generation_temperature: float = 0.7,
+    generation_top_p: float = 0.9,
 ) -> tuple[str, list[VerificationClaim], str]:
     response = generate_text(
         generator_model,
@@ -426,7 +431,9 @@ def run_loop(
         image_path,
         prompt,
         max_new_tokens=max_new_tokens,
-        do_sample=False,
+        do_sample=generation_do_sample,
+        temperature=generation_temperature,
+        top_p=generation_top_p,
     )
     verification = verify_response(
         verifier_model,
@@ -599,6 +606,23 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--image-root", default="data/benchmark/coco_subset")
     parser.add_argument("--max-samples", type=int, default=None)
     parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument(
+        "--generation-do-sample",
+        action="store_true",
+        help="Sample the initial single-pass generation instead of decoding deterministically.",
+    )
+    parser.add_argument(
+        "--generation-temperature",
+        type=float,
+        default=0.7,
+        help="Temperature for --generation-do-sample (default: %(default)s).",
+    )
+    parser.add_argument(
+        "--generation-top-p",
+        type=float,
+        default=0.9,
+        help="Nucleus sampling top-p for --generation-do-sample (default: %(default)s).",
+    )
     parser.add_argument("--verifier-max-new-tokens", type=int, default=512)
     parser.add_argument(
         "--verifier-mode",
@@ -695,6 +719,9 @@ def main() -> None:
                 verifier_mode=args.verifier_mode,
                 max_new_tokens=args.max_new_tokens,
                 verifier_max_new_tokens=args.verifier_max_new_tokens,
+                generation_do_sample=args.generation_do_sample,
+                generation_temperature=args.generation_temperature,
+                generation_top_p=args.generation_top_p,
             )
 
             best_response = None
@@ -727,6 +754,9 @@ def main() -> None:
                     "verifier_model_name": verifier_model_name,
                     "verifier_adapter_path": args.verifier_adapter_path,
                     "verifier_mode": args.verifier_mode,
+                    "generation_do_sample": args.generation_do_sample,
+                    "generation_temperature": args.generation_temperature,
+                    "generation_top_p": args.generation_top_p,
                     "num_candidates": args.num_candidates,
                     "latency_sec": time.time() - start,
                     "pope_question": row.get("pope_question"),
